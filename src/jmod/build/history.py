@@ -28,6 +28,8 @@ PATHSPECS: tuple[str, ...] = (
     *PRIMARY_BUILD_FILES,
     *(f"**/{name}" for name in AUXILIARY_BUILD_FILES),
     *AUXILIARY_BUILD_FILES,
+    # Plugins de convenção declaram a versão fora de build.gradle — ver limitação L-03.
+    "buildSrc/**",
     ".github/workflows/**",
     "**/Dockerfile*",
     "Dockerfile*",
