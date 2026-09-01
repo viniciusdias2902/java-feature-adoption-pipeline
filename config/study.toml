@@ -1,0 +1,59 @@
+# Parâmetros congelados do estudo.
+# Toda alteração invalida os resultados derivados e exige reprocessamento.
+
+[study]
+freeze_date       = "2026-09-01"   # A4 — congelada, não move
+window_start      = "2018-03-20"   # A4 — Java 10 GA, primeira feature do catálogo
+seed              = 20260901       # F3
+
+[sampling]                          # A1
+min_stars         = 100
+min_commits       = 1000
+min_loc_java      = 10000
+created_before    = "2018-03-20"
+active_since      = "2025-09-01"   # último commit nos 12 meses antes do freeze
+exclude_forks     = true
+build_systems     = ["maven", "gradle"]   # A2
+exclude_android   = true                  # A3
+
+[history]                           # A5
+branch            = "default"
+first_parent_only = true
+date_field        = "committer"
+
+[eligibility]
+unit              = "module"       # B1
+preview_counts    = false          # B2
+upgrade_min_days  = 30             # B3 — abaixo disso o evento é `transient`
+pause_on_downgrade = true          # B4
+
+[outcomes]                          # C2, C4
+sustained_window_days   = 180
+sustained_min_occurrences = 3
+sustained_min_files       = 2
+abandonment_window_days = 180
+primary_scope           = "production"          # C1
+tracked_scopes          = ["production", "test", "example", "generated"]
+
+[opportunity]                       # C6
+proxies = ["instanceof_cast", "attributive_switch"]
+
+[paths]                             # D3 — escopo por caminho
+test_globs      = ["**/src/test/**", "**/test/**", "**/tests/**"]
+generated_globs = ["**/generated/**", "**/generated-sources/**", "**/build/**",
+                   "**/target/**", "**/out/**"]
+vendored_globs  = ["**/vendor/**", "**/third_party/**", "**/thirdparty/**"]
+example_globs   = ["**/examples/**", "**/samples/**", "**/benchmarks/**"]
+generated_header_pattern = "(Generated|GENERATED|@Generated|DO NOT EDIT|Auto-generated)"
+generated_header_lines   = 50
+
+[baseline]                          # D1, D2
+resolve_internal_parents = true
+external_parent_policy   = "unresolved"   # nunca interpolar através de gap desconhecido
+conflict_policy          = "min"          # conflito no mesmo nível -> menor valor
+
+[storage]                           # F1
+disk_budget_gb   = 250
+workers          = 8
+clone_filter     = "blob:none"
+retain_clones    = false

@@ -1,0 +1,86 @@
+# Catálogo de features. Versões conferidas contra as JEPs.
+# `stable` é o que define elegibilidade; `preview` é desfecho secundário.
+#
+# `candidate_literal` alimenta `git log -S`; `candidate_regex` alimenta `git log -G`.
+# A escolha entre os dois é um argumento de RECALL, validado pela invariante do HEAD
+# (PLAN.md, invariante global 4). Ver nota em cada entrada.
+
+[[feature]]
+id = "var"
+name = "Local variable type inference"
+jep = 286
+stable = 10
+preview = []
+node = "local_variable_declaration"      # exige checar o campo `type` — ver notas
+candidate_literal = "var "
+recall_note = "Toda declaração com `var` contém o literal 'var '. Precisão baixa (comentários, identificadores), filtrada pela AST."
+
+[[feature]]
+id = "switch_expression"
+name = "Switch expressions"
+jep = 361
+stable = 14
+preview = [12, 13]
+node = "switch_expression"
+candidate_regex = "case[^:]*->|(^|[^a-zA-Z0-9_])yield[ \t]"
+recall_note = "CRÍTICO: `-S'switch'` não detecta a conversão `case 1:` -> `case 1 ->`, pois a contagem de 'switch' não muda. Exige -G. Ver PLAN.md Fase 10."
+
+[[feature]]
+id = "text_block"
+name = "Text blocks"
+jep = 378
+stable = 15
+preview = [13, 14]
+node = "multiline_string_fragment"
+candidate_literal = '"""'
+recall_note = "O delimitador é obrigatório e não ocorre em Java pré-15 fora de comentários."
+
+[[feature]]
+id = "record"
+name = "Records"
+jep = 395
+stable = 16
+preview = [14, 15]
+node = "record_declaration"
+candidate_literal = "record "
+recall_note = "Declaração exige a palavra seguida de espaço. Falso positivo em `class record` filtrado pela AST."
+
+[[feature]]
+id = "pattern_instanceof"
+name = "Pattern matching for instanceof"
+jep = 394
+stable = 16
+preview = [14, 15]
+node = "instanceof_expression"           # exige campo `name` presente
+candidate_literal = "instanceof "
+recall_note = "Superconjunto: pega todo instanceof, inclusive sem binding. Precisão resolvida na AST; o complemento vira o proxy de oportunidade."
+
+[[feature]]
+id = "sealed"
+name = "Sealed classes and interfaces"
+jep = 409
+stable = 17
+preview = [15, 16]
+node = "modifiers:sealed"
+candidate_literal = "sealed "
+recall_note = "`non-sealed` também contém o literal. Ambos são da feature."
+
+[[feature]]
+id = "pattern_switch"
+name = "Pattern matching for switch"
+jep = 441
+stable = 21
+preview = [17, 18, 19, 20]
+node = "switch_rule:type_pattern"
+candidate_regex = "case[ \t]+[A-Z][A-Za-z0-9_.<>]*[ \t]+[a-z]"
+recall_note = "Rótulo de tipo em case. Regex deliberadamente larga; AST decide."
+
+[[feature]]
+id = "record_pattern"
+name = "Record patterns"
+jep = 440
+stable = 21
+preview = [19, 20]
+node = "record_pattern"
+candidate_regex = "(instanceof|case)[ \t]+[A-Z][A-Za-z0-9_.<>]*[ \t]*\\("
+recall_note = "Desconstrução exige parêntese após o tipo, o que a distingue de type_pattern."
