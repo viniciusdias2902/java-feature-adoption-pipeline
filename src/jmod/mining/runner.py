@@ -30,6 +30,45 @@ from jmod.repo.clone import DiskBudget, DiskBudgetExceeded, Workspace
 PHASE = "mine"
 WORKSPACE = Path("data/work")
 
+# Assinaturas de falha TRANSITÓRIA: rede, DNS, timeout. Nunca viram exclusão na primeira
+# tentativa — a queda de rede de 2026-09-01 transformou 1.100 projetos válidos em
+# exclusões indevidas numa cascata de minutos.
+TRANSIENT_SIGNS = (
+    "Could not resolve host",
+    "unable to access",
+    "Connection timed out",
+    "RPC failed",
+    "early EOF",
+    "TimeoutExpired",
+    "Connection reset",
+    "No such file or directory",
+    "Errno 2",
+)
+
+
+def _is_transient(error: str) -> bool:
+    return any(sign in error for sign in TRANSIENT_SIGNS)
+
+
+def _wait_for_network(max_wait_s: int = 1800) -> bool:
+    """Bloqueia até o GitHub responder de novo, com teto. True = rede ok."""
+    import subprocess
+
+    waited = 0
+    while waited <= max_wait_s:
+        probe = subprocess.run(  # noqa: S603
+            ["git", "ls-remote", "--exit-code", "https://github.com/git/git", "HEAD"],
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+        if probe.returncode == 0:
+            return True
+        time.sleep(30)
+        waited += 30
+    return False
+
+
 MINE_BACKFILL = (
     "pom.xml",
     "build.gradle",
@@ -255,7 +294,8 @@ def run_mine(store: Store, study: Study, *, limit: int, only: str | None = None)
         + (f" LIMIT {int(limit)}" if limit else ""),
         (only,) if only else (),
     )
-    total = len(rows)
+    queue = list(rows)
+    total = len(queue)
     if not total:
         print("nada a minerar: tudo processado ou excluído")
         return 0
@@ -278,69 +318,120 @@ def run_mine(store: Store, study: Study, *, limit: int, only: str | None = None)
             workspace,
         )
 
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {pool.submit(work, row): row["project_id"] for row in rows}
-        for i, future in enumerate(as_completed(futures), 1):
-            pid = futures[future]
-            with Store(db_path) as tstore:
-                tstore.conn.execute("PRAGMA busy_timeout = 60000")
-                base = {
-                    "run_id": run,
-                    "phase": PHASE,
-                    "project_id": pid,
-                    "started_at": now(),
-                    "pipeline_version": PIPELINE_VERSION,
-                }
-                try:
-                    stats = future.result()
-                except DiskBudgetExceeded as exc:
-                    print(f"ORÇAMENTO DE DISCO: {exc} — abortando a fila", file=sys.stderr)
-                    for other in futures:
-                        other.cancel()
-                    tstore.upsert(
-                        "run_log",
-                        [{**base, "status": "failed", "ended_at": now(), "error": str(exc)}],
-                    )
-                    return 3
-                except Exception as exc:  # noqa: BLE001 — um projeto não derruba a fila
-                    failed += 1
-                    tstore.exclude(pid, PHASE, "mine_failed", f"{type(exc).__name__}: {exc}"[:300])
-                    tstore.upsert(
-                        "run_log",
-                        [
-                            {
-                                **base,
-                                "status": "failed",
-                                "ended_at": now(),
-                                "error": f"{type(exc).__name__}: {exc}"[:500],
-                            }
-                        ],
-                    )
-                    workspace.release(pid)
-                else:
-                    done += 1
-                    if not stats.recall_ok:
-                        recall_failures += 1
-                    tstore.upsert(
-                        "run_log", [{**base, "status": "ok", "ended_at": now(), "error": None}]
-                    )
-                    flag = "" if stats.recall_ok else "  RECALL-FALHOU"
+    max_passes = 3
+    for attempt in range(1, max_passes + 1):
+        if not queue:
+            break
+        if attempt > 1:
+            print(
+                f"--- passe {attempt}: {len(queue)} projetos com falha transitória; "
+                f"aguardando rede…",
+                flush=True,
+            )
+            if not _wait_for_network():
+                print(
+                    "rede indisponível por 30 min; interrompendo — a execução é retomável",
+                    file=sys.stderr,
+                )
+                break
+        retry: list[sqlite3.Row] = []
+        consecutive_transient = 0
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(work, row): row for row in queue}
+            for i, future in enumerate(as_completed(futures), 1):
+                row = futures[future]
+                pid = row["project_id"]
+                with Store(db_path) as tstore:
+                    tstore.conn.execute("PRAGMA busy_timeout = 60000")
+                    base = {
+                        "run_id": run,
+                        "phase": PHASE,
+                        "project_id": pid,
+                        "started_at": now(),
+                        "pipeline_version": PIPELINE_VERSION,
+                    }
+                    try:
+                        stats = future.result()
+                    except DiskBudgetExceeded as exc:
+                        print(f"ORÇAMENTO DE DISCO: {exc} — abortando a fila", file=sys.stderr)
+                        for other in futures:
+                            other.cancel()
+                        tstore.upsert(
+                            "run_log",
+                            [{**base, "status": "failed", "ended_at": now(), "error": str(exc)}],
+                        )
+                        return 3
+                    except Exception as exc:  # noqa: BLE001 — um projeto não derruba a fila
+                        error = f"{type(exc).__name__}: {exc}"
+                        workspace.release(pid)
+                        if _is_transient(error):
+                            consecutive_transient += 1
+                            retry.append(row)
+                            if attempt == max_passes:
+                                failed += 1
+                                tstore.exclude(pid, PHASE, "mine_network", error[:300])
+                        else:
+                            consecutive_transient = 0
+                            failed += 1
+                            tstore.exclude(pid, PHASE, "mine_failed", error[:300])
+                            tstore.upsert(
+                                "run_log",
+                                [
+                                    {
+                                        **base,
+                                        "status": "failed",
+                                        "ended_at": now(),
+                                        "error": error[:500],
+                                    }
+                                ],
+                            )
+                    else:
+                        consecutive_transient = 0
+                        done += 1
+                        if not stats.recall_ok:
+                            recall_failures += 1
+                        tstore.upsert(
+                            "run_log", [{**base, "status": "ok", "ended_at": now(), "error": None}]
+                        )
+                        flag = "" if stats.recall_ok else "  RECALL-FALHOU"
+                        print(
+                            f"  [{i}/{len(queue)}] {pid:<44} {stats.seconds:6.0f}s "
+                            f"mod={stats.modules:<4} ev={stats.events:<3} "
+                            f"elig={stats.eligibility_periods:<4} "
+                            f"serie={stats.series_points:<5} fu={stats.first_uses}{flag}",
+                            flush=True,
+                        )
+
+                # Disjuntor: 30 falhas transitórias seguidas = rede caída. Cancela o
+                # resto do passe em vez de queimar a fila inteira em minutos.
+                if consecutive_transient >= 30:
                     print(
-                        f"  [{i}/{total}] {pid:<44} {stats.seconds:6.0f}s "
-                        f"mod={stats.modules:<4} ev={stats.events:<3} "
-                        f"elig={stats.eligibility_periods:<4} serie={stats.series_points:<5} "
-                        f"fu={stats.first_uses}{flag}",
+                        "disjuntor: 30 falhas de rede consecutivas — encerrando o passe",
+                        file=sys.stderr,
+                    )
+                    for other, orow in futures.items():
+                        if other.cancel():
+                            retry.append(orow)
+                    break
+
+                if i % 20 == 0 or i == len(queue):
+                    rate = (done + failed) / max(1e-6, time.monotonic() - started)
+                    eta_h = (total - done - failed) / max(rate, 1e-6) / 3600
+                    print(
+                        f"  --- [{done + failed}/{total}] ok={done} falhas={failed} "
+                        f"recall_falhas={recall_failures} retry={len(retry)} "
+                        f"· {rate * 3600:.0f}/h · ETA {eta_h:.1f}h "
+                        f"· workspace {workspace.size_gb():.1f} GB",
                         flush=True,
                     )
-            if i % 20 == 0 or i == total:
-                rate = i / max(1e-6, time.monotonic() - started)
-                eta_h = (total - i) / rate / 3600
-                print(
-                    f"  --- [{i}/{total}] ok={done} falhas={failed} "
-                    f"recall_falhas={recall_failures} · {rate * 3600:.0f}/h · "
-                    f"ETA {eta_h:.1f}h · workspace {workspace.size_gb():.1f} GB",
-                    flush=True,
-                )
+        # dedup preservando ordem (o disjuntor pode duplicar cancelados)
+        seen: set[str] = set()
+        queue = []
+        for row in retry:
+            if row["project_id"] not in seen:
+                seen.add(row["project_id"])
+                queue.append(row)
 
     print(f"mineração: {done} ok, {failed} falhas, {recall_failures} falhas de recall")
     return 0
