@@ -22,7 +22,7 @@ jep = 361
 stable = 14
 preview = [12, 13]
 node = "switch_expression"
-candidate_regex = "case[^:]*->|(^|[^a-zA-Z0-9_])yield[ \t]"
+candidate_regex = "case[^:]*->|(^|[^a-zA-Z0-9_])yield[[:space:]]"
 recall_note = "CRÍTICO: `-S'switch'` não detecta a conversão `case 1:` -> `case 1 ->`, pois a contagem de 'switch' não muda. Exige -G. Ver PLAN.md Fase 10."
 
 [[feature]]
@@ -52,8 +52,11 @@ jep = 394
 stable = 16
 preview = [14, 15]
 node = "instanceof_expression"           # exige campo `name` presente
-candidate_literal = "instanceof "
-recall_note = "Superconjunto: pega todo instanceof, inclusive sem binding. Precisão resolvida na AST; o complemento vira o proxy de oportunidade."
+# ATENÇÃO: -G é POSIX ERE (regcomp do git), NÃO PCRE. `\[` dentro de classe quebra o
+# padrão silenciosamente — colchete literal tem de abrir a classe: `[][...]`. E `\t`
+# dentro de classe é a LETRA t literal (mais barra), não tab: use `[[:space:]]`.
+candidate_regex = 'instanceof[[:space:]]+[A-Za-z_$][][A-Za-z0-9_.<>]*[[:space:]]+[a-z_]'
+recall_note = "CRÍTICO: converter `x instanceof T` + cast em `x instanceof T v` NÃO muda a contagem de 'instanceof ' — a mesma cegueira do switch. Detectada pela invariante de recall em otto-de/edison (série=0, HEAD=4). Exige -G casando o binding."
 
 [[feature]]
 id = "sealed"
@@ -72,7 +75,7 @@ jep = 441
 stable = 21
 preview = [17, 18, 19, 20]
 node = "switch_rule:type_pattern"
-candidate_regex = "case[ \t]+[A-Z][A-Za-z0-9_.<>]*[ \t]+[a-z]"
+candidate_regex = "case[[:space:]]+[A-Z][A-Za-z0-9_.<>]*[[:space:]]+[a-z]"
 recall_note = "Rótulo de tipo em case. Regex deliberadamente larga; AST decide."
 
 [[feature]]
@@ -82,5 +85,5 @@ jep = 440
 stable = 21
 preview = [19, 20]
 node = "record_pattern"
-candidate_regex = "(instanceof|case)[ \t]+[A-Z][A-Za-z0-9_.<>]*[ \t]*\\("
+candidate_regex = "(instanceof|case)[[:space:]]+[A-Z][A-Za-z0-9_.<>]*[[:space:]]*\\("
 recall_note = "Desconstrução exige parêntese após o tipo, o que a distingue de type_pattern."
