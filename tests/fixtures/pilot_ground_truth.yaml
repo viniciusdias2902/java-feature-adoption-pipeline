@@ -1,81 +1,300 @@
 # Gabarito manual do piloto — Fase P.
 #
-# INCOMPLETO. Este arquivo é a verdade-terreno contra a qual as Fases 5, 6, 10 e 11 são
-# validadas. Cada rótulo é obtido por INSPEÇÃO DIRETA dos arquivos do repositório, nunca
-# pela saída da pipeline — do contrário a validação seria circular.
+# INCOMPLETO. Verdade-terreno contra a qual as Fases 5, 6, 10 e 11 são validadas.
+# Cada rótulo vem de INSPEÇÃO DIRETA do repositório, nunca da saída da pipeline —
+# do contrário a validação seria circular.
 #
-# Estado: 3 de 15 projetos com verificação inicial (só baseline no HEAD).
-# Falta: histórico de baseline (SHAs de transição) e primeiro uso de 3 features
-#        (`record`, `var`, text block) para os 15 projetos.
+# Sorteio: estratificado determinístico (seed 20260901) sobre a população SEART de
+# 1327 projetos com probe válido, cobrindo 15 dos 34 estratos preenchidos.
 #
-# Quadro amostral: PROVISÓRIO (github_search — ver registro de decisões D-002).
-# O piloto definitivo precisa ser resorteado sobre o export do SEART.
+# Features a rotular (config/study.toml [pilot]):
+#   record · var · text_block · switch_expression
+#
+# Para cada projeto, preencher:
+#   baseline_history: lista de {sha, date, module, java_version, source} nas transições
+#   first_use:        por feature, {sha, date, path, line} do primeiro uso em produção
+#                     ou `never` se não houver
+#
+# `head.*` vem do probe e é APENAS referência de partida — é regex aproximada (D-003),
+# NÃO é rótulo. Confirmar ou corrigir cada valor à mão.
 
 meta:
   seed: 20260901
-  frame_source: github_search
+  frame_source: seart
+  population: 1327
+  strata_filled: 34
   drawn_at: "2026-09-01"
-  provisional: true
+  labeled_features: [record, var, text_block, switch_expression]
 
 projects:
-  - project_id: reactivex/rxjava
-    stratum: gradle_groovy|mono|internal_parent|modern
-    head:
-      branch: 4.x
-      java_version: 26
-      source: "build.gradle:71 sourceCompatibility = JavaVersion.VERSION_26"
-      confidence: medium # sourceCompatibility, nível 4 em a especificação
-      verified_by: manual_inspection
-      note: >
-        O branch 3.x declara VERSION_1_8; o default (4.x) declara VERSION_26.
-        Confirma que o branch default precisa ser lido do repositório, nunca assumido.
-      toolchain_unresolved: >
-        `languageVersion = JavaLanguageVersion.of(toolchainJdk)` usa variável —
-        irresolvível sem executar o Gradle. sourceCompatibility supre neste caso.
+  - rank: 1
+    project_id: robolectric/robolectric
+    stratum: gradle_kts|multi|internal_parent|modern
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: fc357fec8ef3157f2ac1a30743d15f4b96090736
+      build_system: gradle_kts
+      module_count: 51
+      has_external_parent: False
+      head_baseline: 21
+      head_baseline_source: gradle
     baseline_history: TODO
-    first_use: TODO
-
-  - project_id: spring-projects/spring-framework
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 2
+    project_id: jpmml/jpmml-sklearn
+    stratum: maven|multi|external_parent|unknown
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: a69bf2eb9d91a71abc995068dd9f7d5d243d4ff5
+      build_system: maven
+      module_count: 9
+      has_external_parent: True
+      head_baseline: null
+      head_baseline_source: null
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 3
+    project_id: ome/openmicroscopy
+    stratum: gradle_groovy|mono|internal_parent|legacy
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: develop
+      head_sha: a49489e0cb2c30833afa413ae796f65478f6a387
+      build_system: gradle_groovy
+      module_count: 1
+      has_external_parent: False
+      head_baseline: 8
+      head_baseline_source: gradle
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 4
+    project_id: languagetool-org/languagetool
+    stratum: mixed|multi|external_parent|modern
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: 1e7061bc8b18a1e66fb31583bb7ce837c90baca2
+      build_system: mixed
+      module_count: 49
+      has_external_parent: True
+      head_baseline: 17
+      head_baseline_source: maven_compiler
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 5
+    project_id: esapi/esapi-java-legacy
+    stratum: maven|mono|internal_parent|legacy
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: develop
+      head_sha: bc21afe77bc8c36d79729698cfce62ca29e04604
+      build_system: maven
+      module_count: 1
+      has_external_parent: False
+      head_baseline: 8
+      head_baseline_source: maven_compiler
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 6
+    project_id: norconex/crawlers
+    stratum: maven|multi|internal_parent|modern
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: main
+      head_sha: 38b6b175fd1bbcbb007a7e5597e768bdf4af5bcf
+      build_system: maven
+      module_count: 15
+      has_external_parent: False
+      head_baseline: 21
+      head_baseline_source: maven_java_property
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 7
+    project_id: jbake-org/jbake
     stratum: gradle_groovy|multi|internal_parent|unknown
-    head:
-      branch: main
-      java_version: null
-      source: null
-      confidence: null
-      verified_by: manual_inspection
-      note: >
-        O build.gradle raiz (82 linhas) genuinamente não declara versão. A configuração
-        vive em convention plugins sob buildSrc/, fora do alcance de extração estática.
-        LIMITAÇÃO CONFIRMADA, não defeito — documentar como limitação conhecida.
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: ee32be317336158be567e002744398ef86c89afd
+      build_system: gradle_groovy
+      module_count: 5
+      has_external_parent: False
+      head_baseline: null
+      head_baseline_source: null
     baseline_history: TODO
-    first_use: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 8
+    project_id: find-sec-bugs/find-sec-bugs
+    stratum: mixed|multi|external_parent|legacy
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: 90447f7e39e529c31cf098ebade0a755b944dd91
+      build_system: mixed
+      module_count: 8
+      has_external_parent: True
+      head_baseline: 8
+      head_baseline_source: maven_compiler
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 9
+    project_id: jenkinsci/subversion-plugin
+    stratum: maven|mono|external_parent|unknown
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: 4d0816326747365661ebd0383e426bfe91398b35
+      build_system: maven
+      module_count: 1
+      has_external_parent: True
+      head_baseline: null
+      head_baseline_source: null
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 10
+    project_id: yegor256/rultor
+    stratum: maven|mono|external_parent|legacy
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: 494d079d6273bb1d31e7335112bdf161cab5f076
+      build_system: maven
+      module_count: 1
+      has_external_parent: True
+      head_baseline: 11
+      head_baseline_source: maven_compiler
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 11
+    project_id: ome/bioformats
+    stratum: maven|multi|internal_parent|legacy
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: develop
+      head_sha: 5fabd9f7fbc3bcb3bf5c0afed202f67e8d5ea047
+      build_system: maven
+      module_count: 9
+      has_external_parent: False
+      head_baseline: 11
+      head_baseline_source: maven_compiler
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 12
+    project_id: qupath/qupath
+    stratum: gradle_kts|multi|internal_parent|unknown
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: main
+      head_sha: 67cbf619996582f8737550080cd05c6e52b37b13
+      build_system: gradle_kts
+      module_count: 11
+      has_external_parent: False
+      head_baseline: null
+      head_baseline_source: null
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 13
+    project_id: gtnewhorizons/gt5-unofficial
+    stratum: gradle_kts|mono|internal_parent|unknown
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: ae3e10075959678f9ca64f123b889c4cde98b84a
+      build_system: gradle_kts
+      module_count: 1
+      has_external_parent: False
+      head_baseline: null
+      head_baseline_source: null
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 14
+    project_id: xvik/dropwizard-guicey
+    stratum: mixed|multi|internal_parent|modern
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: master
+      head_sha: 7c7dc6ac636fd0261c396e6ba74dce7414291f16
+      build_system: mixed
+      module_count: 25
+      has_external_parent: False
+      head_baseline: 17
+      head_baseline_source: maven_compiler
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
+  - rank: 15
+    project_id: otto-de/edison-microservice
+    stratum: gradle_groovy|multi|internal_parent|modern
+    probe_reference:          # NÃO é rótulo — conferir à mão
+      default_branch: main
+      head_sha: b91d07649bbcc1d641bfc8676335e42502c3d571
+      build_system: gradle_groovy
+      module_count: 13
+      has_external_parent: False
+      head_baseline: 17
+      head_baseline_source: gradle
+    baseline_history: TODO
+    first_use:
+      record: TODO
+      var: TODO
+      text_block: TODO
+      switch_expression: TODO
 
+# Observações verificadas à mão fora do sorteio atual. Não são gabarito do piloto —
+# documentam limitações reais de extração, e viram fixture das Fases 5 e 6.
+verified_limitations:
+  - project_id: spring-projects/spring-framework
+    finding: >
+      build.gradle raiz (82 linhas) não declara versão; a configuração vive em convention
+      plugins sob buildSrc/, fora do alcance de extração estática. LIMITAÇÃO, não defeito.
   - project_id: seleniumhq/selenium
-    stratum: maven|mono|internal_parent|unknown
-    head:
-      branch: trunk
-      java_version: null
-      source: null
-      confidence: null
-      verified_by: manual_inspection
-      note: >
-        O pom.xml raiz não declara release/source/target. O Selenium usa Bazel como build
-        primário; o Maven é secundário. Candidato a exclusão por `no_effective_build`, ou
-        a uma fonte de evidência adicional (Bazel) fora do escopo de a especificação.
-    baseline_history: TODO
-    first_use: TODO
-
-# Os 12 restantes do sorteio, ainda sem rótulo:
-pending:
-  - ibotpeaches/apktool
-  - chinabugotech/hutool
-  - spring-projects/spring-boot
-  - brettwooldridge/hikaricp
-  - apache/kafka
-  - redisson/redisson
-  - teamnewpipe/newpipe
-  - elastic/elasticsearch
-  - thealgorithms/java
-  - oracle/graal
-  - keycloak/keycloak
-  - dbeaver/dbeaver
+    finding: >
+      pom.xml raiz não declara release/source/target — o build primário é Bazel.
+      Candidato a `no_effective_build`, ou a fonte de evidência fora da hierarquia.
+  - project_id: reactivex/rxjava
+    finding: >
+      Branch 3.x declara VERSION_1_8; o default (4.x) declara VERSION_26. O branch default
+      precisa ser lido do repositório, nunca assumido.
