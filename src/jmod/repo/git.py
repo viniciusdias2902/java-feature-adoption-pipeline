@@ -96,6 +96,25 @@ class Repo:
         out = self.run("ls-tree", "-r", "--name-only", "-z", sha, "--", *pathspecs)
         return [p for p in out.split("\0") if p]
 
+    def backfill(self, patterns: Sequence[str], min_batch: int = 8000) -> bool:
+        """Pré-busca em lote os blobs históricos dos caminhos dados (`git backfill --sparse`).
+
+        Num clone blobless, cada blob ausente custa uma ida à rede na primeira leitura —
+        1.166 commits tocando `pom.xml` (caso real: yegor256/rultor, maven-release-plugin
+        versiona o POM a cada release) viram 1.166 round-trips. O backfill esparso baixa
+        todos numa única sessão. Retorna False se indisponível; a leitura preguiçosa
+        continua funcionando como fallback, apenas lenta.
+        """
+        info = self.path / "info"
+        info.mkdir(exist_ok=True)
+        (info / "sparse-checkout").write_text("\n".join(patterns) + "\n", encoding="utf-8")
+        try:
+            self.run("config", "core.sparseCheckout", "true")
+            self.run("backfill", "--sparse", f"--min-batch-size={min_batch}", timeout=1800)
+            return True
+        except GitError:
+            return False
+
     def commit_count(self, ref: str) -> int:
         return int(self.run("rev-list", "--count", ref).strip() or 0)
 
