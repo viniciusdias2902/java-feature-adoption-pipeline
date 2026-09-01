@@ -11,6 +11,8 @@ from jmod.ingest import seart
 from jmod.ingest.github import GitHubClient
 from jmod.ingest.probe import probe_repo
 from jmod.ingest.sampling import stratified_draw, stratum_matrix
+from jmod.ingest.seart_api import SeartClient, query_params, to_row
+from jmod.ingest.tls import build_bundle
 from jmod.provenance import PIPELINE_VERSION, new_run_id, now
 
 PHASE_INGEST, PHASE_VALIDATE, PHASE_PROBE, PHASE_PILOT = "ingest", "validate", "probe", "pilot"
@@ -21,15 +23,27 @@ def _pid(full_name: str) -> str:
 
 
 def run_ingest(
-    store: Store, study: Study, *, csv: Path | None, from_github_search: bool, limit: int
+    store: Store,
+    study: Study,
+    *,
+    csv: Path | None,
+    from_seart_api: bool,
+    from_github_search: bool,
+    limit: int,
 ) -> int:
     run = new_run_id()
-    if csv is None and not from_github_search:
-        print("informe --csv <export do SEART> ou --from-github-search", file=sys.stderr)
+    if csv is None and not from_github_search and not from_seart_api:
+        print(
+            "informe --from-seart-api (recomendado), --csv <export> ou --from-github-search",
+            file=sys.stderr,
+        )
         return 2
 
     with store.phase_run(run, PHASE_INGEST):
-        if csv is not None:
+        if from_seart_api:
+            kept, dropped = _ingest_seart_api(store, study, limit)
+            source = "seart"
+        elif csv is not None:
             if not csv.exists():
                 print(f"CSV não encontrado: {csv}", file=sys.stderr)
                 return 2
@@ -83,6 +97,82 @@ def _ingest_seart(store: Store, study: Study, csv: Path, limit: int) -> tuple[in
             batch = []
     store.upsert("projects", batch)
     return kept, dropped
+
+
+def _ingest_seart_api(store: Store, study: Study, limit: int) -> tuple[int, int]:
+    """Ingestão pela API REST do SEART. Ver seart_api.py para a armadilha dos filtros."""
+    bundle = build_bundle(Path("data/cache"))
+    client = SeartClient(verify=bundle)
+    params = query_params(study)
+    try:
+        total = client.total(params)
+        ignored = client.verify_filters(params)
+        if ignored:
+            print(
+                f"aviso: filtros sem efeito no servidor: {ignored} — reaplicados no cliente",
+                file=sys.stderr,
+            )
+        print(f"SEART: {total} projetos casam os filtros de seleção")
+
+        kept = dropped = served = 0
+        batch: list[dict[str, object]] = []
+        for item in client.iter_items(params, limit):
+            served += 1
+            row = to_row(item)
+            if not row.full_name:
+                continue
+            pid = _pid(row.full_name)
+            reason = seart.screen(row, study)
+            if reason:
+                store.exclude(pid, PHASE_INGEST, reason, "reaplicado no cliente")
+                dropped += 1
+                continue
+            batch.append(
+                {
+                    "project_id": pid,
+                    "full_name": row.full_name,
+                    "clone_url": f"https://github.com/{row.full_name}.git",
+                    "default_branch": row.default_branch,
+                    "frame_source": "seart",
+                    "seart_stars": row.stars,
+                    "seart_commits": row.commits,
+                    "seart_loc_java": row.loc_java,
+                    "seart_created_at": row.created_at,
+                    "seart_last_commit_at": row.last_commit_at,
+                    "gh_archived": None,
+                    "gh_disabled": None,
+                    "gh_fork": None,
+                    "gh_pushed_at": None,
+                    "gh_size_kb": None,
+                    "gh_validated_at": None,
+                    "pipeline_version": PIPELINE_VERSION,
+                    "collected_at": now(),
+                }
+            )
+            kept += 1
+            if len(batch) >= 500:
+                store.upsert("projects", batch)
+                batch = []
+        store.upsert("projects", batch)
+
+        # O SEART pode informar um totalItems maior do que efetivamente serve nas páginas.
+        # A diferença é do servidor, não perda nossa — mas precisa ficar registrada, e não
+        # pode ser confundida com descarte silencioso da pipeline.
+        if not limit and served != total:
+            print(
+                f"aviso: SEART informou totalItems={total} mas serviu {served} itens "
+                f"({total - served} nunca retornados em nenhuma página)",
+                file=sys.stderr,
+            )
+            store.exclude(
+                "__frame__",
+                PHASE_INGEST,
+                "seart_total_mismatch",
+                f"reported={total} served={served}",
+            )
+        return kept, dropped
+    finally:
+        client.close()
 
 
 def _ingest_github_search(store: Store, study: Study, limit: int) -> tuple[int, int]:

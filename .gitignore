@@ -10,3 +10,4 @@ data/work/
 .pytest_cache/
 local/
 uv.lock.bak
+data/cache/

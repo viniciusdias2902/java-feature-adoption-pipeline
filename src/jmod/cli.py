@@ -23,7 +23,12 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", help="resumo do estado atual do banco")
 
     ing = sub.add_parser("ingest", help="fase 2: carrega o quadro amostral")
-    ing.add_argument("--csv", type=Path, help="export do SEART")
+    ing.add_argument(
+        "--from-seart-api",
+        action="store_true",
+        help="quadro amostral pela API REST do SEART (recomendado)",
+    )
+    ing.add_argument("--csv", type=Path, help="export CSV do SEART")
     ing.add_argument(
         "--from-github-search",
         action="store_true",
@@ -96,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
                 store,
                 study,
                 csv=args.csv,
+                from_seart_api=args.from_seart_api,
                 from_github_search=args.from_github_search,
                 limit=args.limit,
             )
