@@ -44,6 +44,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     sam = sub.add_parser("sample-pilot", help="fase P: sorteio estratificado determinístico")
     sam.add_argument("-n", type=int, default=15)
+
+    mine = sub.add_parser("mine", help="fase 10: mineração de baseline, elegibilidade e adoção")
+    mine.add_argument("--limit", type=int, default=0)
+    mine.add_argument("--project", type=str, default=None)
     return p
 
 
@@ -111,6 +115,11 @@ def main(argv: list[str] | None = None) -> int:
             return ingest_pipeline.run_probe(store, study, limit=args.limit)
         if args.command == "sample-pilot":
             return ingest_pipeline.run_sample_pilot(store, study, n=args.n)
+
+        if args.command == "mine":
+            from jmod.mining.runner import run_mine
+
+            return run_mine(store, study, limit=args.limit, only=args.project)
 
     return 1
 

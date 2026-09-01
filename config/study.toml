@@ -64,6 +64,6 @@ conflict_policy          = "min"          # conflito no mesmo nível -> menor va
 
 [storage]                           # F1
 disk_budget_gb   = 250
-workers          = 8
+workers          = 12
 clone_filter     = "blob:none"
 retain_clones    = false

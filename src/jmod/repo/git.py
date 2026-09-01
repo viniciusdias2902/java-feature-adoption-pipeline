@@ -35,6 +35,7 @@ class FileChange:
     path: str
     change_type: str  # A | M | D | R
     old_path: str | None
+    blob_oid: str | None = None  # OID do blob resultante (None em deleções)
 
 
 class Repo:
@@ -160,16 +161,30 @@ class Repo:
         pathspecs: Sequence[str] = (),
         first_parent: bool = True,
     ) -> Iterator[FileChange]:
-        """Commits candidatos.
+        """Commits candidatos, com o OID do blob resultante de cada alteração.
 
-        `-S` (literal) casa commits onde a CONTAGEM do texto muda — é barato, mas não vê
-        transformações que preservam a contagem. `-G` (regex) casa qualquer linha de diff
-        que bata, é mais caro e mais abrangente. A escolha é por feature, e o argumento é
-        de recall (ver config/features.toml e PLAN.md Fase 10).
+        `-S` (literal) casa commits onde a CONTAGEM do texto muda — barato, mas cego a
+        transformações que a preservam. `-G` (regex) casa qualquer linha de diff, mais
+        caro e mais abrangente. A escolha é por feature (config/features.toml).
+
+        ATENÇÃO: ambos calculam diffs, o que exige os blobs localmente. Num clone
+        blobless SEM backfill de `*.java`, cada blob vira uma ida à rede e o comando
+        trava por minutos — rode `backfill()` com os padrões de código antes.
+
+        Usa `--raw` em vez de `--name-status` porque o formato raw entrega o OID do
+        blob de graça; é ele que permite cachear parsing por conteúdo.
         """
         if (literal is None) == (regex is None):
             raise ValueError("informe exatamente um entre literal e regex")
-        args = ["log", ref, f"--format={RECORD}%H %cI", "--name-status", "--diff-filter=AMDR", "-M"]
+        args = [
+            "log",
+            ref,
+            f"--format={RECORD}%H %cI",
+            "--raw",
+            "--no-abbrev",
+            "--diff-filter=AMDR",
+            "-M",
+        ]
         if first_parent:
             args.append("--first-parent")
         # -G já interpreta o padrão como regex; --pickaxe-regex só se aplica a -S.
@@ -177,15 +192,39 @@ class Repo:
         if pathspecs:
             args += ["--", *pathspecs]
 
-        out = self.run(*args)
+        out = self.run(*args, timeout=3600)
+        zero = "0" * 40
         for block in out.split(RECORD):
             if not block.strip():
                 continue
             lines = block.strip("\n").split("\n")
             sha, _, when = lines[0].partition(" ")
             for line in lines[1:]:
-                parts = line.split("\t")
-                if len(parts) >= 2:
-                    path = parts[2] if parts[0].startswith("R") and len(parts) >= 3 else parts[1]
-                    old = parts[1] if parts[0].startswith("R") and len(parts) >= 3 else None
-                    yield FileChange(sha, when, path, parts[0][0], old)
+                if not line.startswith(":"):
+                    continue
+                meta, _, paths = line.partition("\t")
+                fields = meta.split()
+                if len(fields) < 5:
+                    continue
+                new_oid, status = fields[3], fields[4]
+                oid = None if new_oid == zero else new_oid
+                if status.startswith("R"):
+                    old_path, _, new_path = paths.partition("\t")
+                    yield FileChange(sha, when, new_path, "R", old_path, oid)
+                else:
+                    yield FileChange(sha, when, paths, status[0], None, oid)
+
+    def fetch_objects(self, oids: Sequence[str], chunk: int = 4000) -> None:
+        """Busca objetos específicos em lotes — uma sessão de rede por lote."""
+        for i in range(0, len(oids), chunk):
+            batch = list(oids[i : i + chunk])
+            if batch:
+                self.run(
+                    "fetch",
+                    "--quiet",
+                    "--no-tags",
+                    "--no-write-fetch-head",
+                    "origin",
+                    *batch,
+                    timeout=1800,
+                )
