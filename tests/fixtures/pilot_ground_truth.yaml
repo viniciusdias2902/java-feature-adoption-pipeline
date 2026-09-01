@@ -1,0 +1,81 @@
+# Gabarito manual do piloto — Fase P.
+#
+# INCOMPLETO. Este arquivo é a verdade-terreno contra a qual as Fases 5, 6, 10 e 11 são
+# validadas. Cada rótulo é obtido por INSPEÇÃO DIRETA dos arquivos do repositório, nunca
+# pela saída da pipeline — do contrário a validação seria circular.
+#
+# Estado: 3 de 15 projetos com verificação inicial (só baseline no HEAD).
+# Falta: histórico de baseline (SHAs de transição) e primeiro uso de 3 features
+#        (`record`, `var`, text block) para os 15 projetos.
+#
+# Quadro amostral: PROVISÓRIO (github_search — ver registro de decisões D-002).
+# O piloto definitivo precisa ser resorteado sobre o export do SEART.
+
+meta:
+  seed: 20260901
+  frame_source: github_search
+  drawn_at: "2026-09-01"
+  provisional: true
+
+projects:
+  - project_id: reactivex/rxjava
+    stratum: gradle_groovy|mono|internal_parent|modern
+    head:
+      branch: 4.x
+      java_version: 26
+      source: "build.gradle:71 sourceCompatibility = JavaVersion.VERSION_26"
+      confidence: medium # sourceCompatibility, nível 4 em a especificação
+      verified_by: manual_inspection
+      note: >
+        O branch 3.x declara VERSION_1_8; o default (4.x) declara VERSION_26.
+        Confirma que o branch default precisa ser lido do repositório, nunca assumido.
+      toolchain_unresolved: >
+        `languageVersion = JavaLanguageVersion.of(toolchainJdk)` usa variável —
+        irresolvível sem executar o Gradle. sourceCompatibility supre neste caso.
+    baseline_history: TODO
+    first_use: TODO
+
+  - project_id: spring-projects/spring-framework
+    stratum: gradle_groovy|multi|internal_parent|unknown
+    head:
+      branch: main
+      java_version: null
+      source: null
+      confidence: null
+      verified_by: manual_inspection
+      note: >
+        O build.gradle raiz (82 linhas) genuinamente não declara versão. A configuração
+        vive em convention plugins sob buildSrc/, fora do alcance de extração estática.
+        LIMITAÇÃO CONFIRMADA, não defeito — documentar como limitação conhecida.
+    baseline_history: TODO
+    first_use: TODO
+
+  - project_id: seleniumhq/selenium
+    stratum: maven|mono|internal_parent|unknown
+    head:
+      branch: trunk
+      java_version: null
+      source: null
+      confidence: null
+      verified_by: manual_inspection
+      note: >
+        O pom.xml raiz não declara release/source/target. O Selenium usa Bazel como build
+        primário; o Maven é secundário. Candidato a exclusão por `no_effective_build`, ou
+        a uma fonte de evidência adicional (Bazel) fora do escopo de a especificação.
+    baseline_history: TODO
+    first_use: TODO
+
+# Os 12 restantes do sorteio, ainda sem rótulo:
+pending:
+  - ibotpeaches/apktool
+  - chinabugotech/hutool
+  - spring-projects/spring-boot
+  - brettwooldridge/hikaricp
+  - apache/kafka
+  - redisson/redisson
+  - teamnewpipe/newpipe
+  - elastic/elasticsearch
+  - thealgorithms/java
+  - oracle/graal
+  - keycloak/keycloak
+  - dbeaver/dbeaver
