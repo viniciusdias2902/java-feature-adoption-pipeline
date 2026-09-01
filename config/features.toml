@@ -22,7 +22,7 @@ jep = 361
 stable = 14
 preview = [12, 13]
 node = "switch_expression"
-candidate_regex = "case[^:]*->|(^|[^a-zA-Z0-9_])yield[[:space:]]"
+candidate_regex = "case[^:]*->|default[[:space:]]*->|(^|[^a-zA-Z0-9_])yield[[:space:](]"
 recall_note = "CRÍTICO: `-S'switch'` não detecta a conversão `case 1:` -> `case 1 ->`, pois a contagem de 'switch' não muda. Exige -G. Ver PLAN.md Fase 10."
 
 [[feature]]
@@ -75,8 +75,8 @@ jep = 441
 stable = 21
 preview = [17, 18, 19, 20]
 node = "switch_rule:type_pattern"
-candidate_regex = "case[[:space:]]+[A-Z][A-Za-z0-9_.<>]*[[:space:]]+[a-z]"
-recall_note = "Rótulo de tipo em case. Regex deliberadamente larga; AST decide."
+candidate_regex = "case[[:space:]]+(null[[:space:]]*,[[:space:]]*)?[A-Za-z_$][][A-Za-z0-9_.<>]*([[:space:]]+[A-Za-z_]|[[:space:]]*\\()"
+recall_note = "Rótulo de tipo em case, cobrindo: tipo primitivo/array minúsculo (case double[][] d), binding _ do Java 22, prefixo null (case null, Foo f) e desconstrução (case Foo(...)). Regex deliberadamente larga; AST decide. Linhas-prova: qupath IJProperties.java, ZarrWriterUtils.java."
 
 [[feature]]
 id = "record_pattern"

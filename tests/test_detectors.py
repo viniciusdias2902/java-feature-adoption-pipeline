@@ -165,3 +165,33 @@ def test_sintaxe_desconhecida_nao_derruba_o_parser() -> None:
     tree = parse(src.encode())
     assert has_errors(tree)
     assert _hits("record", src), "o record válido continua detectável apesar do erro"
+
+
+def test_switch_classico_aninhado_nao_e_expressao() -> None:
+    """Pai != block não significa expressão: case, if sem chaves e label são statements."""
+    casos = [
+        "class A { void m(int a, int b){ switch(a){ case 1: switch(b){ case 2: break; } } } }",
+        "class A { void m(int a){ if (a > 0) switch(a){ case 1: break; } } }",
+        "class A { void m(int a){ done: switch(a){ case 1: break done; } } }",
+    ]
+    for src in casos:
+        assert _hits("switch_expression", src) == [], src
+
+
+def test_switch_em_posicao_de_expressao_continua_contando() -> None:
+    casos = [
+        "class A { int m(int d){ return switch(d){ case 1: yield 1; default: yield 0; }; } }",
+        "class A { int m(int d){ int x = switch(d){ case 1: yield 1; default: yield 0; }; return x; } }",
+    ]
+    for src in casos:
+        assert _hits("switch_expression", src), src
+
+
+def test_pattern_switch_com_tipos_primitivos_e_binding_anonimo() -> None:
+    """Casos reais do qupath que escaparam do regex de candidatos (a AST sempre viu)."""
+    casos = [
+        "class A { void m(Object o){ switch(o){ case double[][] px -> f(px); default -> g(); } } void f(Object x){} void g(){} }",
+        "class A { void m(Object o){ switch(o){ case String _ -> f(); default -> g(); } } void f(){} void g(){} }",
+    ]
+    for src in casos:
+        assert _hits("pattern_switch", src), src

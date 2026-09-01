@@ -176,14 +176,19 @@ class Repo:
         """
         if (literal is None) == (regex is None):
             raise ValueError("informe exatamente um entre literal e regex")
+        # SEM -M, deliberadamente: com detecção de renomeação, uma renomeação que
+        # preserva a contagem não vira candidato — o caminho antigo apodrece no estado
+        # da mineração e conta em dobro quando o novo caminho muda depois. Como D+A,
+        # os dois lados viram candidatos e o estado migra sozinho. (Detectado pela
+        # invariante de recall: 69 falhas nos primeiros 160 projetos da população.)
         args = [
             "log",
             ref,
             f"--format={RECORD}%H %cI",
             "--raw",
             "--no-abbrev",
-            "--diff-filter=AMDR",
-            "-M",
+            "--diff-filter=AMD",
+            "--no-renames",  # diff.renames é true por padrão; omitir -M não basta
         ]
         if first_parent:
             args.append("--first-parent")

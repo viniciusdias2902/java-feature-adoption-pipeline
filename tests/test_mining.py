@@ -133,3 +133,25 @@ def test_repositorio_sem_a_feature(synthetic) -> None:
     r.commit({"src/main/java/A.java": "class A { int x; }"})
     m = _mine(r, RECORD)
     assert m.series == [] and m.first_uses == []
+
+
+def test_renomeacao_pura_nao_apodrece_o_estado(synthetic) -> None:
+    """Regressão da falha de recall em massa da primeira rodada populacional.
+
+    Renomeação que preserva a contagem + modificação posterior do novo caminho:
+    com -M no pickaxe, o caminho antigo ficava no estado para sempre e contava em
+    dobro. Sem -M, a renomeação vira D+A e o estado migra.
+    """
+    r = synthetic()
+    r.commit({"src/main/java/A.java": "class A { record P(int x) {} }"})
+    r.rename("src/main/java/A.java", "src/main/java/B.java")  # pura: contagem igual
+    r.commit({"src/main/java/B.java": "class B { record P(int x) {} record Q(int y) {} }"})
+
+    repo = Repo(r.path)
+    m = mine_feature(repo, "main", RECORD, RULES)
+    finais = [p for p in m.series if p.scope == "production"]
+    assert finais[-1].occurrence_count == 2, "3 seria o sintoma do caminho fantasma"
+    assert finais[-1].file_count == 1
+
+    head = scan_head(repo, "main", STUDY.features, RULES)
+    assert head[("record", "production")] == finais[-1].occurrence_count

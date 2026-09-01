@@ -1,0 +1,196 @@
+mineração de 1323 projetos com 12 workers (piloto primeiro, depois por tamanho)
+  [1/1323] esapi/esapi-java-legacy                          18s mod=1    ev=3   elig=0    serie=0     fu=0
+  [2/1323] michaelrocks/libphonenumber-android               8s mod=4    ev=0   elig=0    serie=0     fu=0
+  [3/1323] fabricmc/yarn                                    26s mod=5    ev=5   elig=17   serie=35    fu=12
+  [4/1323] find-sec-bugs/find-sec-bugs                      27s mod=16   ev=18  elig=1    serie=0     fu=0  RECALL-FALHOU
+  [5/1323] xvik/dropwizard-guicey                           30s mod=28   ev=27  elig=150  serie=6     fu=7  RECALL-FALHOU
+  [6/1323] jmock-developers/jmock-library                    8s mod=29   ev=23  elig=0    serie=0     fu=0
+  [7/1323] confluentinc/kafka-streams-examples               9s mod=1    ev=2   elig=6    serie=0     fu=0
+  [8/1323] jpmml/jpmml-sklearn                              35s mod=9    ev=9   elig=9    serie=0     fu=0  RECALL-FALHOU
+  [9/1323] j-easy/easy-random                               10s mod=17   ev=31  elig=24   serie=7     fu=3
+  [10/1323] caprica/vlcj                                     12s mod=2    ev=3   elig=1    serie=0     fu=0
+  [11/1323] photon-github/anticheataddition                   7s mod=1    ev=3   elig=8    serie=75    fu=51  RECALL-FALHOU
+  [12/1323] multiverse/multiverse-inventories                 8s mod=1    ev=3   elig=1    serie=19    fu=38
+  [13/1323] microprofile/microprofile-open-api               10s mod=5    ev=5   elig=5    serie=0     fu=0  RECALL-FALHOU
+  [14/1323] norconex/crawlers                                46s mod=24   ev=17  elig=180  serie=282   fu=321  RECALL-FALHOU
+  [15/1323] chrisvest/stormpot                                7s mod=4    ev=5   elig=16   serie=22    fu=9  RECALL-FALHOU
+  [16/1323] komamitsu/fluency                                 6s mod=9    ev=2   elig=5    serie=0     fu=0
+  [17/1323] influxdata/influxdb-java                          6s mod=1    ev=2   elig=0    serie=2     fu=2  RECALL-FALHOU
+  [18/1323] pircbotx/pircbotx                                12s mod=1    ev=1   elig=0    serie=0     fu=0
+  [19/1323] sekwah41/advanced-portals                         9s mod=11   ev=51  elig=91   serie=71    fu=3  RECALL-FALHOU
+  [20/1323] jenkinsci/docker-plugin                           8s mod=3    ev=0   elig=0    serie=0     fu=0
+  --- [20/1323] ok=20 falhas=0 recall_falhas=9 · 1262/h · ETA 1.0h · workspace 0.3 GB
+  [21/1323] codestory/fluent-http                            11s mod=1    ev=1   elig=1    serie=0     fu=0
+  [22/1323] netflix/servo                                     7s mod=10   ev=7   elig=0    serie=0     fu=0
+  [23/1323] camunda-community-hub/spring-zeebe               19s mod=39   ev=64  elig=115  serie=18    fu=6  RECALL-FALHOU
+  [24/1323] brettwooldridge/hikaricp                         10s mod=7    ev=4   elig=1    serie=19    fu=22
+  [25/1323] jmrozanec/cron-utils                              6s mod=1    ev=11  elig=11   serie=1     fu=1
+  [26/1323] mybatis/guice                                    10s mod=1    ev=1   elig=1    serie=0     fu=0
+  [27/1323] xebialabs/overthere                               7s mod=5    ev=5   elig=8    serie=0     fu=0  RECALL-FALHOU
+  [28/1323] bonigarcia/webdrivermanager                      12s mod=1    ev=5   elig=2    serie=0     fu=0
+  [29/1323] spring-cloud/spring-cloud-vault                  16s mod=11   ev=0   elig=0    serie=9     fu=4
+  [30/1323] komoot/photon                                    17s mod=3    ev=4   elig=8    serie=93    fu=20  RECALL-FALHOU
+  [31/1323] deep-symmetry/beat-link                          15s mod=1    ev=1   elig=1    serie=0     fu=0  RECALL-FALHOU
+  [32/1323] ome/openmicroscopy                               91s mod=27   ev=4   elig=0    serie=0     fu=0
+  [33/1323] ibotpeaches/apktool                              22s mod=19   ev=10  elig=0    serie=0     fu=0
+  [34/1323] mcmics/jenkins-control-plugin                    22s mod=1    ev=6   elig=2    serie=41    fu=5
+  [35/1323] minelittlepony/minelittlepony                    28s mod=3    ev=5   elig=8    serie=165   fu=4  RECALL-FALHOU
+  [36/1323] jenkinsci/performance-plugin                     11s mod=1    ev=0   elig=0    serie=0     fu=0
+  [37/1323] mutabilitydetector/mutabilitydetector            21s mod=20   ev=5   elig=0    serie=0     fu=0
+  [38/1323] kittehorg/kittehircclientlib                     23s mod=1    ev=3   elig=8    serie=8     fu=19  RECALL-FALHOU
+  [39/1323] ballerina-platform/module-ballerina-ftp          24s mod=18   ev=0   elig=0    serie=16    fu=2
+  [40/1323] fxmisc/richtextfx                                18s mod=5    ev=1   elig=0    serie=1     fu=1
+  --- [40/1323] ok=40 falhas=0 recall_falhas=15 · 1133/h · ETA 1.1h · workspace 0.4 GB
+  [41/1323] ome/bioformats                                  129s mod=49   ev=67  elig=9    serie=0     fu=0  RECALL-FALHOU
+  [42/1323] qos-ch/slf4j                                     67s mod=33   ev=142 elig=24   serie=5     fu=2
+  [43/1323] jenkinsci/jenkins-test-harness                   23s mod=4    ev=1   elig=7    serie=25    fu=2
+  [44/1323] http-rpc/kilo                                    50s mod=32   ev=6   elig=40   serie=776   fu=52  RECALL-FALHOU
+  [45/1323] i-net-software/jwebassembly                      13s mod=2    ev=0   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [46/1323] bastillion-io/bastillion                         17s mod=2    ev=4   elig=16   serie=4     fu=6
+  [47/1323] cloudbees-oss/zendesk-java-client                21s mod=1    ev=2   elig=1    serie=5     fu=2
+  [48/1323] jitsi/jitsi-meet-torture                         14s mod=1    ev=2   elig=1    serie=0     fu=0
+  [49/1323] citizensdev/citizensapi                          16s mod=1    ev=1   elig=0    serie=0     fu=0
+  [50/1323] qupath/qupath                                   160s mod=23   ev=7   elig=13   serie=631   fu=94  RECALL-FALHOU
+  [51/1323] robolectric/robolectric                         169s mod=88   ev=18  elig=26   serie=6     fu=6  RECALL-FALHOU
+  [52/1323] tencent/apijson                                  14s mod=53   ev=6   elig=6    serie=0     fu=0
+  [53/1323] lukas-krecan/jsonunit                           107s mod=28   ev=48  elig=132  serie=33    fu=21
+  [54/1323] dre2n/dungeonsxl                                 15s mod=22   ev=2   elig=0    serie=0     fu=0
+  [55/1323] rabbitmq/hop                                     14s mod=1    ev=1   elig=1    serie=0     fu=0
+  [56/1323] spring-cloud/spring-cloud-consul                 65s mod=22   ev=27  elig=90   serie=1     fu=1
+  [57/1323] apache/maven-archetype                           38s mod=337  ev=54  elig=0    serie=0     fu=0
+  [58/1323] vert-x3/vertx-redis-client                       13s mod=1    ev=0   elig=0    serie=1     fu=1
+  [59/1323] objectify/objectify                              16s mod=1    ev=3   elig=1    serie=0     fu=0
+  [60/1323] jankotek/mapdb                                   18s mod=1    ev=4   elig=0    serie=0     fu=0
+  --- [60/1323] ok=60 falhas=0 recall_falhas=20 · 1137/h · ETA 1.1h · workspace 0.3 GB
+  [61/1323] nielsbasjes/logparser                            32s mod=26   ev=94  elig=112  serie=0     fu=0
+  [62/1323] discordsrv/discordsrv                            10s mod=1    ev=0   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [63/1323] jetbrains/jediterm                                9s mod=8    ev=1   elig=4    serie=4     fu=1  RECALL-FALHOU
+  [64/1323] crazy-crew/crazyenchantments                     81s mod=24   ev=6   elig=94   serie=78    fu=10  RECALL-FALHOU
+  [65/1323] jenkinsci/credentials-plugin                      8s mod=1    ev=0   elig=0    serie=9     fu=7  RECALL-FALHOU
+  [66/1323] wso2/carbon-kernel                               51s mod=100  ev=25  elig=0    serie=0     fu=0
+  [67/1323] davidmoten/rxjava2-jdbc                           9s mod=6    ev=0   elig=0    serie=0     fu=0
+  [68/1323] jenkinsci/jira-plugin                            12s mod=1    ev=1   elig=0    serie=8     fu=3
+  [69/1323] testng-team/testng-eclipse                        9s mod=6    ev=18  elig=36   serie=0     fu=0
+  [70/1323] cdi-unit/cdi-unit                                20s mod=45   ev=20  elig=43   serie=34    fu=3  RECALL-FALHOU
+  [71/1323] apdevteam/movecraft                              20s mod=44   ev=29  elig=177  serie=108   fu=5  RECALL-FALHOU
+  [72/1323] kotcrab/vis-ui                                   20s mod=43   ev=12  elig=0    serie=0     fu=0  RECALL-FALHOU
+  [73/1323] ralscha/extdirectspring                          17s mod=7    ev=9   elig=8    serie=4     fu=15  RECALL-FALHOU
+  [74/1323] jenkinsci/gitlab-plugin                          14s mod=1    ev=0   elig=6    serie=3     fu=12  RECALL-FALHOU
+  [75/1323] unitsofmeasurement/indriya                       13s mod=1    ev=2   elig=0    serie=3     fu=3  RECALL-FALHOU
+  [76/1323] schildbach/public-transport-enabler              24s mod=3    ev=5   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [77/1323] kagkarlsson/db-scheduler                         20s mod=12   ev=12  elig=66   serie=15    fu=5
+  [78/1323] apache/maven-enforcer                            34s mod=290  ev=12  elig=0    serie=0     fu=0
+  [79/1323] netflix/priam                                    10s mod=5    ev=1   elig=0    serie=0     fu=0
+  [80/1323] crazy-crew/crazycrates                          111s mod=30   ev=11  elig=191  serie=109   fu=5  RECALL-FALHOU
+  --- [80/1323] ok=80 falhas=0 recall_falhas=32 · 1151/h · ETA 1.1h · workspace 0.3 GB
+  [81/1323] spring-cloud/spring-cloud-openfeign              51s mod=54   ev=47  elig=0    serie=9     fu=12  RECALL-FALHOU
+  [82/1323] scalecube/scalecube-services                     57s mod=43   ev=0   elig=0    serie=60    fu=10  RECALL-FALHOU
+  [83/1323] mth/yeti                                         12s mod=1    ev=0   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [84/1323] apache/maven-javadoc-plugin                      46s mod=370  ev=8   elig=20   serie=0     fu=0
+  [85/1323] icij/extract                                     17s mod=4    ev=7   elig=18   serie=15    fu=4
+  [86/1323] netcentric/accesscontroltool                     31s mod=14   ev=35  elig=13   serie=0     fu=0  RECALL-FALHOU
+  [87/1323] netflix/governator                                9s mod=14   ev=0   elig=0    serie=0     fu=0
+  [88/1323] aws/serverless-java-container                    49s mod=53   ev=6   elig=78   serie=6     fu=4
+  [89/1323] forge/roaster                                    21s mod=6    ev=17  elig=36   serie=3     fu=4
+  [90/1323] flanglet/kanzi                                   10s mod=1    ev=2   elig=1    serie=0     fu=0
+  [91/1323] spongepowered/configurate                        58s mod=31   ev=13  elig=43   serie=7     fu=3  RECALL-FALHOU
+  [92/1323] fasterxml/jackson-dataformat-xml                 17s mod=1    ev=1   elig=0    serie=23    fu=12  RECALL-FALHOU
+  [93/1323] eclipse-wildwebdeveloper/wildwebdeveloper        19s mod=18   ev=0   elig=0    serie=37    fu=25  RECALL-FALHOU
+  [94/1323] rundeck/rundeck-cli                              11s mod=11   ev=16  elig=48   serie=0     fu=0
+  [95/1323] jenkinsci/email-ext-plugin                       22s mod=1    ev=0   elig=0    serie=12    fu=22  RECALL-FALHOU
+  [96/1323] funnyguilds/funnyguilds                          32s mod=29   ev=3   elig=6    serie=3     fu=14
+  [97/1323] logfellow/logstash-logback-encoder               17s mod=1    ev=4   elig=6    serie=2     fu=11  RECALL-FALHOU
+  [98/1323] rockinchaos/itemjoin                             24s mod=1    ev=2   elig=0    serie=2     fu=1  RECALL-FALHOU
+  [99/1323] phax/phase2                                      40s mod=13   ev=0   elig=6    serie=2     fu=2  RECALL-FALHOU
+  [100/1323] greenmail-mail-test/greenmail                    31s mod=12   ev=21  elig=0    serie=0     fu=0
+  --- [100/1323] ok=100 falhas=0 recall_falhas=43 · 1238/h · ETA 1.0h · workspace 0.3 GB
+  [101/1323] stleary/json-java                                 9s mod=1    ev=2   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [102/1323] dropsnorz/owlplug                                18s mod=6    ev=17  elig=48   serie=21    fu=4  RECALL-FALHOU
+  [103/1323] pengrad/java-telegram-bot-api                    18s mod=3    ev=1   elig=0    serie=0     fu=0
+  [104/1323] twelveiterationmods/waystones                    50s mod=7    ev=2   elig=32   serie=218   fu=8  RECALL-FALHOU
+  [105/1323] apache/maven-dependency-plugin                   40s mod=216  ev=3   elig=0    serie=0     fu=0
+  [106/1323] gtnewhorizons/gt5-unofficial                    326s mod=12   ev=1   elig=0    serie=885   fu=90  RECALL-FALHOU
+  [107/1323] georgh93/marriagemaster                          20s mod=17   ev=1   elig=6    serie=0     fu=0
+  [108/1323] geysermc/mcprotocollib                           36s mod=3    ev=3   elig=0    serie=46    fu=21  RECALL-FALHOU
+  [109/1323] apache/mina                                      44s mod=60   ev=23  elig=0    serie=0     fu=0  RECALL-FALHOU
+  [110/1323] jpmml/jpmml-model                                38s mod=16   ev=28  elig=11   serie=0     fu=0
+  [111/1323] jenkinsci/git-client-plugin                      21s mod=1    ev=3   elig=12   serie=15    fu=23
+  [112/1323] cryptomator/cryptofs                             15s mod=1    ev=9   elig=9    serie=107   fu=27  RECALL-FALHOU
+  [113/1323] hubspot/slack-client                             17s mod=7    ev=0   elig=0    serie=0     fu=0
+  [114/1323] commonwealthrobotics/bowlerstudio                18s mod=1    ev=0   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [115/1323] spring-cloud/spring-cloud-task                   85s mod=24   ev=28  elig=102  serie=9     fu=4
+  [116/1323] googlecloudplatform/cloud-sql-jdbc-socket-factory     71s mod=31   ev=6   elig=32   serie=0     fu=0
+  [117/1323] retgal/dayon                                     16s mod=1    ev=1   elig=1    serie=2     fu=1
+  [118/1323] jenkinsci/configuration-as-code-plugin           35s mod=7    ev=0   elig=0    serie=8     fu=3  RECALL-FALHOU
+  [119/1323] jboss-modules/jboss-modules                      19s mod=5    ev=4   elig=6    serie=0     fu=0  RECALL-FALHOU
+  [120/1323] spring-cloud/spring-cloud-open-service-broker     33s mod=15   ev=2   elig=6    serie=0     fu=0
+  --- [120/1323] ok=120 falhas=0 recall_falhas=53 · 1189/h · ETA 1.0h · workspace 0.2 GB
+  [121/1323] ripmeapp/ripme                                   20s mod=1    ev=1   elig=0    serie=18    fu=3
+  [122/1323] javadev/underscore-java                          24s mod=6    ev=11  elig=8    serie=0     fu=0  RECALL-FALHOU
+  [123/1323] pippo-java/pippo                                 61s mod=113  ev=87  elig=53   serie=0     fu=0
+  [124/1323] appium/java-client                               34s mod=2    ev=2   elig=1    serie=29    fu=4
+  [125/1323] toolbox4minecraft/amidst                         23s mod=3    ev=0   elig=8    serie=2     fu=2
+  [126/1323] choonster-minecraft-mods/testmod3                33s mod=1    ev=5   elig=8    serie=124   fu=12  RECALL-FALHOU
+  [127/1323] opencubicchunks/cubicchunks                      23s mod=3    ev=1   elig=0    serie=0     fu=0
+  [128/1323] jenkinsci/ec2-plugin                             26s mod=1    ev=0   elig=0    serie=9     fu=16
+  [129/1323] tinystruct/tinystruct                            20s mod=1    ev=3   elig=6    serie=7     fu=8  RECALL-FALHOU
+  [130/1323] languagetool-org/languagetool                   395s mod=57   ev=181 elig=294  serie=17    fu=6
+  [131/1323] hierynomus/sshj                                  14s mod=2    ev=6   elig=6    serie=0     fu=0  RECALL-FALHOU
+  [132/1323] zendesk/maxwell                                  19s mod=2    ev=2   elig=1    serie=0     fu=0  RECALL-FALHOU
+  [133/1323] moquette-io/moquette                             28s mod=15   ev=19  elig=0    serie=0     fu=0
+  [134/1323] spring-projects/spring-restdocs                  36s mod=31   ev=28  elig=42   serie=2     fu=2
+  [135/1323] mvel/mvel                                        45s mod=3    ev=4   elig=6    serie=26    fu=10
+  [136/1323] tootallnate/java-websocket                       10s mod=1    ev=2   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [137/1323] davidmoten/rxjava-extras                         15s mod=1    ev=2   elig=0    serie=0     fu=0
+  [138/1323] lmbishop/quests                                  20s mod=4    ev=10  elig=30   serie=56    fu=5  RECALL-FALHOU
+  [139/1323] phax/jcodemodel                                  30s mod=16   ev=1   elig=0    serie=31    fu=34  RECALL-FALHOU
+  [140/1323] spring-cloud/spring-cloud-netflix                95s mod=55   ev=48  elig=0    serie=4     fu=3
+  --- [140/1323] ok=140 falhas=0 recall_falhas=61 · 1196/h · ETA 1.0h · workspace 0.1 GB
+  [141/1323] orphan-oss/ognl                                  17s mod=3    ev=4   elig=18   serie=6     fu=4  RECALL-FALHOU
+  [142/1323] minio/minio-java                                 16s mod=1    ev=2   elig=0    serie=0     fu=0
+  [143/1323] pebbletemplates/pebble                           19s mod=14   ev=3   elig=24   serie=0     fu=0  RECALL-FALHOU
+  [144/1323] line/line-bot-sdk-java                           62s mod=34   ev=11  elig=132  serie=50    fu=239  RECALL-FALHOU
+  [145/1323] yegor256/qulice                                  42s mod=90   ev=19  elig=44   serie=21    fu=7  RECALL-FALHOU
+  [146/1323] objectbox/objectbox-java                         25s mod=11   ev=10  elig=1    serie=0     fu=0  RECALL-FALHOU
+  [147/1323] jshiell/checkstyle-idea                          23s mod=1    ev=4   elig=8    serie=107   fu=15
+  [148/1323] paul-hammant/qdox                                18s mod=8    ev=3   elig=0    serie=1     fu=1
+  [149/1323] replaymod/replaymod                              19s mod=12   ev=1   elig=0    serie=1     fu=1
+  [150/1323] bootique/bootique                                25s mod=17   ev=0   elig=0    serie=9     fu=22
+  [151/1323] yegor256/takes                                   24s mod=3    ev=2   elig=0    serie=0     fu=0
+  [152/1323] jenkinsci/kubernetes-plugin                      21s mod=1    ev=0   elig=0    serie=33    fu=8
+  [153/1323] apache/maven-assembly-plugin                     44s mod=489  ev=3   elig=0    serie=0     fu=0
+  [154/1323] enginehub/worldguard                             19s mod=9    ev=2   elig=0    serie=27    fu=3
+  [155/1323] zalando/riptide                                  43s mod=32   ev=23  elig=144  serie=13    fu=11
+  [156/1323] oxaliscommunity/oxalis                           55s mod=52   ev=30  elig=17   serie=0     fu=0
+  [157/1323] bwaldvogel/mongo-java-server                     17s mod=7    ev=25  elig=42   serie=6     fu=19  RECALL-FALHOU
+  [158/1323] jnr/jnr-ffi                                      20s mod=1    ev=2   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [159/1323] asciidoctor/asciidoctorj                         20s mod=14   ev=19  elig=12   serie=4     fu=1
+  [160/1323] multiverse/multiverse-core                       22s mod=1    ev=4   elig=1    serie=23    fu=63  RECALL-FALHOU
+  --- [160/1323] ok=160 falhas=0 recall_falhas=69 · 1198/h · ETA 1.0h · workspace 0.1 GB
+  [161/1323] wso2/charon                                      34s mod=5    ev=15  elig=40   serie=0     fu=0
+  [162/1323] jenkinsci/acceptance-test-harness                37s mod=27   ev=3   elig=8    serie=8     fu=8
+  [163/1323] xerial/sqlite-jdbc                               16s mod=1    ev=2   elig=0    serie=0     fu=0
+  [164/1323] ebourg/jsign                                     16s mod=10   ev=13  elig=0    serie=0     fu=0  RECALL-FALHOU
+  [165/1323] openhft/chronicle-core                           48s mod=5    ev=1   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [166/1323] sirblobman/combatlogx                            48s mod=151  ev=165 elig=440  serie=19    fu=2
+  [167/1323] lukas-krecan/shedlock                           243s mod=98   ev=127 elig=393  serie=55    fu=11
+  [168/1323] twelveiterations/waystones                       50s mod=7    ev=4   elig=40   serie=397   fu=8  RECALL-FALHOU
+  [169/1323] applecommander/applecommander                    16s mod=21   ev=25  elig=96   serie=49    fu=11
+  [170/1323] plast-lab/doop                                   19s mod=16   ev=1   elig=42   serie=1     fu=1  RECALL-FALHOU
+  [171/1323] leonchen83/redis-replicator                      21s mod=1    ev=1   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [172/1323] netflix/zuul                                     27s mod=8    ev=0   elig=0    serie=37    fu=10  RECALL-FALHOU
+  [173/1323] embulk/embulk                                    31s mod=45   ev=7   elig=0    serie=0     fu=0  RECALL-FALHOU
+  [174/1323] jenkinsci/stapler                                60s mod=8    ev=22  elig=0    serie=8     fu=13
+  [175/1323] brianfrankcooper/ycsb                            43s mod=72   ev=100 elig=0    serie=0     fu=0  RECALL-FALHOU
+  [176/1323] bwravencl/controllerbuddy                        55s mod=1    ev=13  elig=18   serie=322   fu=56  RECALL-FALHOU
+  [177/1323] jberet/jsr352                                    96s mod=96   ev=82  elig=270  serie=1     fu=1  RECALL-FALHOU
+  [178/1323] playn/playn                                      68s mod=70   ev=41  elig=0    serie=0     fu=0  RECALL-FALHOU
+  [179/1323] dreamhead/moco                                   38s mod=5    ev=8   elig=24   serie=6     fu=37  RECALL-FALHOU
+  [180/1323] camel-tooling/camel-idea-plugin                  27s mod=5    ev=4   elig=14   serie=58    fu=12  RECALL-FALHOU
+  --- [180/1323] ok=180 falhas=0 recall_falhas=82 · 1176/h · ETA 1.0h · workspace 0.1 GB
+  [181/1323] qiniu/java-sdk                                   11s mod=2    ev=1   elig=0    serie=0     fu=0
+  [182/1323] playtikaoss/testcontainers-spring-boot          157s mod=56   ev=40  elig=324  serie=17    fu=12  RECALL-FALHOU
+  [183/1323] jenkinsci/workflow-cps-plugin                    18s mod=5    ev=0   elig=1    serie=43    fu=9  RECALL-FALHOU
+  [184/1323] database-rider/database-rider                    38s mod=15   ev=9   elig=2    serie=0     fu=0
+  [185/1323] spring-projects/spring-data-rest                 70s mod=20   ev=0   elig=0    serie=30    fu=5  RECALL-FALHOU
+  [186/1323] eclipse-vertx/vertx-auth                         26s mod=18   ev=0   elig=0    serie=0     fu=0  RECALL-FALHOU

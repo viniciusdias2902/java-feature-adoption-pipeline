@@ -141,7 +141,24 @@ def _switch_expressions(tree: Tree, source: bytes) -> Iterator[Hit]:
         body = node.child_by_field_name("body")
         arrow = body is not None and any(c.type == "switch_rule" for c in body.children)
         yields = any(n.type == "yield_statement" for n in walk(node))
-        in_expression = node.parent is not None and node.parent.type != "block"
+        # Posição de expressão exige pai de contexto de EXPRESSÃO. "pai != block" não
+        # basta: um switch clássico aninhado em `case X:`, `if` sem chaves ou label tem
+        # pai switch_block_statement_group/if_statement/... e continua sendo statement.
+        # (Falso positivo real: qupath, RotatedImageServer.java L97.)
+        statement_parents = {
+            "block",
+            "switch_block_statement_group",
+            "switch_rule",
+            "labeled_statement",
+            "if_statement",
+            "while_statement",
+            "do_statement",
+            "for_statement",
+            "enhanced_for_statement",
+            "expression_statement",
+            "program",
+        }
+        in_expression = node.parent is not None and node.parent.type not in statement_parents
 
         if in_expression:
             subtype = "expression_position"
