@@ -55,7 +55,11 @@ node = "instanceof_expression"           # exige campo `name` presente
 # ATENÇÃO: -G é POSIX ERE (regcomp do git), NÃO PCRE. `\[` dentro de classe quebra o
 # padrão silenciosamente — colchete literal tem de abrir a classe: `[][...]`. E `\t`
 # dentro de classe é a LETRA t literal (mais barra), não tab: use `[[:space:]]`.
-candidate_regex = 'instanceof[[:space:]]+[A-Za-z_$][][A-Za-z0-9_.<>]*[[:space:]]+[a-z_]'
+# Recall máximo deliberado: `instanceof final Player p` (79 ocorrências num único mod de
+# Minecraft) e genéricos com vírgula quebravam qualquer regex de binding. Toda linha com
+# instanceof vira candidata; a AST descarta as sem binding. Precisão é problema da AST,
+# recall é problema do regex — e recall não se negocia.
+candidate_regex = 'instanceof'
 recall_note = "CRÍTICO: converter `x instanceof T` + cast em `x instanceof T v` NÃO muda a contagem de 'instanceof ' — a mesma cegueira do switch. Detectada pela invariante de recall em otto-de/edison (série=0, HEAD=4). Exige -G casando o binding."
 
 [[feature]]
