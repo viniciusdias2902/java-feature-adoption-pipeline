@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from jmod.config import Study
@@ -284,6 +286,8 @@ def run_validate(store: Store, study: Study, *, limit: int) -> int:
 
 
 def run_probe(store: Store, study: Study, *, limit: int) -> int:
+    """Probe paralelo. As clonagens são dominadas por rede, então threads bastam;
+    a escrita no SQLite fica na thread principal, que é onde a conexão vive."""
     run = new_run_id()
     rows = store.query(
         "SELECT p.project_id, p.clone_url, p.default_branch FROM projects p "
@@ -292,44 +296,69 @@ def run_probe(store: Store, study: Study, *, limit: int) -> int:
         "WHERE pr.project_id IS NULL AND e.project_id IS NULL"
         + (f" LIMIT {int(limit)}" if limit else "")
     )
+    total = len(rows)
+    if not total:
+        print("nada a fazer: todos os projetos já têm probe ou exclusão")
+        return 0
+
+    workers = int(study.storage["workers"])
+    print(f"probe de {total} projetos com {workers} workers")
+
     done = failed = android = 0
-    with store.phase_run(run, PHASE_PROBE):
-        for row in rows:
-            result = probe_repo(row["clone_url"], row["default_branch"])
+    started = time.monotonic()
+
+    with store.phase_run(run, PHASE_PROBE), ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {
+            pool.submit(probe_repo, r["clone_url"], r["default_branch"]): r["project_id"]
+            for r in rows
+        }
+        for i, future in enumerate(as_completed(futures), 1):
+            pid = futures[future]
+            try:
+                result = future.result()
+            except Exception as exc:  # noqa: BLE001 — falha de um repo não derruba a fila
+                store.exclude(pid, PHASE_PROBE, "probe_crashed", f"{type(exc).__name__}: {exc}")
+                failed += 1
+                continue
+
             if result.error:
-                store.exclude(row["project_id"], PHASE_PROBE, result.error)
+                store.exclude(pid, PHASE_PROBE, result.error)
                 failed += 1
-                continue
-            if result.is_android and study.sampling["exclude_android"]:
-                store.exclude(row["project_id"], PHASE_PROBE, "android")
+            elif result.is_android and study.sampling["exclude_android"]:
+                store.exclude(pid, PHASE_PROBE, "android")
                 android += 1
-                continue
-            if result.build_system == "none":
-                store.exclude(row["project_id"], PHASE_PROBE, "no_build_system")
+            elif result.build_system == "none":
+                store.exclude(pid, PHASE_PROBE, "no_build_system")
                 failed += 1
-                continue
-            store.upsert(
-                "probe",
-                [
-                    {
-                        "project_id": row["project_id"],
-                        "head_sha": result.head_sha,
-                        "build_system": result.build_system,
-                        "module_count": result.module_count,
-                        "has_external_parent": int(result.has_external_parent),
-                        "head_baseline": result.head_baseline,
-                        "head_baseline_source": result.head_baseline_source,
-                        "is_android": int(result.is_android),
-                        "pipeline_version": PIPELINE_VERSION,
-                        "collected_at": now(),
-                    }
-                ],
-            )
-            done += 1
-            print(
-                f"  {row['project_id']:<44} {result.build_system:<14} "
-                f"módulos={result.module_count:<4} java={result.head_baseline}"
-            )
+            else:
+                store.upsert(
+                    "probe",
+                    [
+                        {
+                            "project_id": pid,
+                            "head_sha": result.head_sha,
+                            "build_system": result.build_system,
+                            "module_count": result.module_count,
+                            "has_external_parent": int(result.has_external_parent),
+                            "head_baseline": result.head_baseline,
+                            "head_baseline_source": result.head_baseline_source,
+                            "is_android": int(result.is_android),
+                            "pipeline_version": PIPELINE_VERSION,
+                            "collected_at": now(),
+                        }
+                    ],
+                )
+                done += 1
+
+            if i % 25 == 0 or i == total:
+                rate = i / max(1e-6, time.monotonic() - started)
+                eta = (total - i) / rate / 60
+                print(
+                    f"  [{i}/{total}] ok={done} android={android} falhas={failed} "
+                    f"· {rate * 60:.0f}/min · ETA {eta:.0f}min",
+                    flush=True,
+                )
+
     print(f"probe: {done} ok, {failed} falhas, {android} excluídos por Android")
     return 0
 
