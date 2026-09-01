@@ -47,6 +47,7 @@ class Study:
     history: dict[str, Any]
     eligibility: dict[str, Any]
     outcomes: dict[str, Any]
+    pilot: dict[str, Any]
     opportunity: dict[str, Any]
     paths: dict[str, Any]
     baseline: dict[str, Any]
@@ -127,6 +128,7 @@ def load_study(path: Path | None = None, features_path: Path | None = None) -> S
         history=raw["history"],
         eligibility=raw["eligibility"],
         outcomes=outcomes,
+        pilot=raw["pilot"],
         opportunity=raw["opportunity"],
         paths=raw["paths"],
         baseline=raw["baseline"],
@@ -135,6 +137,9 @@ def load_study(path: Path | None = None, features_path: Path | None = None) -> S
     )
 
     known = {f.id for f in study.features}
+    unknown_pilot = set(study.pilot["labeled_features"]) - known
+    if unknown_pilot:
+        raise ConfigError(f"pilot.labeled_features desconhecidas: {sorted(unknown_pilot)}")
     unknown = set(study.opportunity["proxies"]) - {"instanceof_cast", "attributive_switch"}
     if unknown:
         raise ConfigError(f"proxies de oportunidade desconhecidos: {sorted(unknown)}")

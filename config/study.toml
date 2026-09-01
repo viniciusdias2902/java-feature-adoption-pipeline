@@ -16,6 +16,16 @@ exclude_forks     = true
 build_systems     = ["maven", "gradle"]   # A2
 exclude_android   = true                  # A3
 
+[pilot]                             # Fase P — quais features recebem gabarito manual
+# Escolhidas para cobrir modos de falha DISTINTOS, não por facilidade:
+#   record            -> contextual keyword (`class record {}` é Java 8 válido)
+#   var               -> mesmo nó de AST que `int var = 5`; só o campo `type` separa
+#   text_block        -> literal; sem nó próprio (string_literal + multiline_string_fragment)
+#   switch_expression -> o pickaxe `-S` NÃO detecta a conversão `case 1:` -> `case 1 ->`,
+#                        porque a contagem de "switch" não muda. É onde a mineração da
+#                        Fase 10 tem mais chance de falhar, logo onde o gabarito mais vale.
+labeled_features = ["record", "var", "text_block", "switch_expression"]
+
 [history]                           # A5
 branch            = "default"
 first_parent_only = true

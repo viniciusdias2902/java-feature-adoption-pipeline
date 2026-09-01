@@ -126,3 +126,19 @@ def test_rejeita_preview_posterior_ao_estavel(tmp_path: Path) -> None:
     )
     with pytest.raises(ConfigError, match="preview"):
         load_features(p)
+
+
+def test_features_do_piloto_existem_no_catalogo() -> None:
+    study = load_study()
+    escolhidas = study.pilot["labeled_features"]
+    assert escolhidas == ["record", "var", "text_block", "switch_expression"]
+    assert set(escolhidas) <= {f.id for f in study.features}
+
+
+def test_rejeita_feature_de_piloto_inexistente(tmp_path: Path) -> None:
+    body = _valid_body().replace(
+        'labeled_features = ["record", "var", "text_block", "switch_expression"]',
+        'labeled_features = ["record", "nao_existe"]',
+    )
+    with pytest.raises(ConfigError, match="labeled_features"):
+        load_study(_write(tmp_path, body))
