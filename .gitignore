@@ -9,3 +9,4 @@ data/work/
 .mypy_cache/
 .pytest_cache/
 local/
+uv.lock.bak
