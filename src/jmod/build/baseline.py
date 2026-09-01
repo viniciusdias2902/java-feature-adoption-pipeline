@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum
 
+from jmod.build.gradle import GradleDeclaration
 from jmod.build.java_versions import parse_java_version
 from jmod.build.maven import Pom, interpolate, parent_chain
 
@@ -181,6 +182,80 @@ def resolve(module: str, evidence: list[Evidence], external_parent: bool) -> Obs
         raw_value=chosen.raw_value,
         corroborating=corroborating,
     )
+
+
+def gradle_evidence(declarations: list[GradleDeclaration], module: str) -> list[Evidence]:
+    """Converte declarações Gradle em evidências, mapeando a fonte para o nível."""
+    levels = {
+        "gradle_toolchain": Level.GRADLE_TOOLCHAIN,
+        "gradle_release_option": Level.GRADLE_TOOLCHAIN,
+        "gradle_source_compatibility": Level.GRADLE_COMPATIBILITY,
+        "gradle_target_compatibility": Level.GRADLE_COMPATIBILITY,
+    }
+    return [
+        Evidence(module, d.source, levels[d.source], d.version, d.raw_value)
+        for d in declarations
+        if d.source in levels
+    ]
+
+
+def gradle_baselines(
+    build_files: dict[str, bytes], properties: dict[str, str] | None = None
+) -> dict[str, Observation]:
+    """Baseline por módulo para um commit Gradle.
+
+    Três caminhos de evidência, em ordem de precedência:
+
+    1. declaração própria do módulo;
+    2. plugin de convenção sob `buildSrc/` que o módulo aplica — o id do plugin vem do
+       nome do arquivo, então o vínculo é determinístico;
+    3. `subprojects {}` / `allprojects {}` do build raiz.
+    """
+    from jmod.build.gradle import applied_plugins, convention_plugin_id, parse_gradle
+
+    conventions: dict[str, list[GradleDeclaration]] = {}
+    by_module: dict[str, list[GradleDeclaration]] = {}
+    plugins_of: dict[str, set[str]] = {}
+
+    for path, content in build_files.items():
+        plugin_id = convention_plugin_id(path)
+        if plugin_id is not None:
+            conventions[plugin_id] = parse_gradle(content, properties)
+            continue
+        if path.startswith("buildSrc/"):
+            continue
+        module = path.rsplit("/", 1)[0] if "/" in path else ""
+        by_module.setdefault(module, []).extend(parse_gradle(content, properties))
+        plugins_of.setdefault(module, set()).update(applied_plugins(content))
+
+    propagated = [
+        d
+        for decls in by_module.values()
+        for d in decls
+        if d.scope in ("subprojects", "allprojects")
+    ]
+
+    result: dict[str, Observation] = {}
+    for module, decls in by_module.items():
+        own = [d for d in decls if d.scope == "own"]
+        # `allprojects` alcança a raiz também; `subprojects`, apenas os filhos.
+        inherited = [
+            d
+            for d in propagated
+            if d.scope == "allprojects" or (d.scope == "subprojects" and module != "")
+        ]
+        evidence = gradle_evidence(own, module)
+        if not [e for e in evidence if e.defines_baseline]:
+            from_conventions = [
+                d
+                for plugin_id in plugins_of.get(module, set())
+                for d in conventions.get(plugin_id, [])
+            ]
+            evidence += gradle_evidence(from_conventions, module)
+        if not [e for e in evidence if e.defines_baseline]:
+            evidence += gradle_evidence(inherited, module)
+        result[module] = resolve(module, evidence, external_parent=False)
+    return result
 
 
 def maven_baselines(poms: dict[str, bytes]) -> dict[str, Observation]:
