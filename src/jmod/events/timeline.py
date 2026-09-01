@@ -137,8 +137,25 @@ def module_timelines(
         if not relevant:
             continue  # só arquivos auxiliares mudaram; baseline intacta
 
+        # --enable-preview: no build do próprio módulo, ou no da raiz (que o Maven herda
+        # e o Gradle costuma aplicar via allprojects). Busca literal — o texto é raro e
+        # distintivo o bastante para não precisar de parsing.
+        preview_modules = {
+            path.rsplit("/", 1)[0] if "/" in path else ""
+            for path, content in current.items()
+            if b"--enable-preview" in content
+        }
+        root_preview = "" in preview_modules
+
         for module, obs in _observations_from(current).items():
-            samples.setdefault(module, []).append(Sample(sha, dates[sha], obs.java_version))
+            samples.setdefault(module, []).append(
+                Sample(
+                    sha,
+                    dates[sha],
+                    obs.java_version,
+                    preview=root_preview or module in preview_modules,
+                )
+            )
 
     out: dict[str, ModuleTimeline] = {}
     for module, module_samples in samples.items():

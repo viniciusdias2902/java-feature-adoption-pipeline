@@ -32,6 +32,7 @@ class Sample:
     sha: str
     committed_at: str  # ISO-8601 com fuso
     java_version: int | None  # None = desconhecida naquele commit
+    preview: bool = False  # --enable-preview presente na configuração de build
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class Interval:
     end_sha: str | None  # None = vigente no fim da observação
     end_date: str | None
     java_version: int | None
+    preview: bool = False
 
 
 @dataclass(frozen=True)
@@ -60,11 +62,18 @@ def _days_between(start: str, end: str) -> int:
 
 
 def build_intervals(samples: list[Sample]) -> list[Interval]:
-    """Colapsa observações consecutivas iguais; gaps de `None` viram intervalos próprios."""
+    """Colapsa observações consecutivas iguais; gaps de `None` viram intervalos próprios.
+
+    A igualdade considera (versão, preview): ligar `--enable-preview` abre intervalo novo
+    mesmo sem mudança de versão, porque altera a elegibilidade preview.
+    """
     ordered = sorted(samples, key=lambda s: (s.committed_at, s.sha))
     intervals: list[Interval] = []
     for sample in ordered:
-        if intervals and intervals[-1].java_version == sample.java_version:
+        if intervals and (intervals[-1].java_version, intervals[-1].preview) == (
+            sample.java_version,
+            sample.preview,
+        ):
             continue
         if intervals:
             previous = intervals[-1]
@@ -74,8 +83,13 @@ def build_intervals(samples: list[Sample]) -> list[Interval]:
                 sample.sha,
                 sample.committed_at,
                 previous.java_version,
+                previous.preview,
             )
-        intervals.append(Interval(sample.sha, sample.committed_at, None, None, sample.java_version))
+        intervals.append(
+            Interval(
+                sample.sha, sample.committed_at, None, None, sample.java_version, sample.preview
+            )
+        )
     return intervals
 
 
@@ -91,7 +105,25 @@ def derive_events(
     events: list[VersionEvent] = []
     last_stable: int | None = None
 
-    known = [i for i in intervals if i.java_version is not None]
+    # Um toggle de --enable-preview divide intervalos sem mudar a versão; para eventos,
+    # partes consecutivas da mesma versão são reunidas — senão cada metade curta viraria
+    # um falso `transient`.
+    merged: list[Interval] = []
+    for interval in intervals:
+        if merged and merged[-1].java_version == interval.java_version:
+            head = merged[-1]
+            merged[-1] = Interval(
+                head.start_sha,
+                head.start_date,
+                interval.end_sha,
+                interval.end_date,
+                head.java_version,
+                head.preview,
+            )
+            continue
+        merged.append(interval)
+
+    known = [i for i in merged if i.java_version is not None]
     for interval in known:
         end = interval.end_date or end_of_observation
         duration = _days_between(interval.start_date, end)

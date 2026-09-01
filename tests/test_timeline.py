@@ -109,3 +109,29 @@ def test_observations_at_usa_gradle_quando_maven_nao_resolve(synthetic) -> None:
     )
     obs = observations_at(Repo(r.path), sha)[""]
     assert obs.java_version == 17
+
+
+def test_enable_preview_e_detectado_no_build(synthetic) -> None:
+    r = synthetic()
+    r.commit(
+        {
+            "pom.xml": (
+                "<project><properties>"
+                "<maven.compiler.release>15</maven.compiler.release>"
+                "<maven.compiler.enablePreview>true</maven.compiler.enablePreview>"
+                "</properties><build><plugins><plugin>"
+                "<artifactId>maven-compiler-plugin</artifactId>"
+                "<configuration><compilerArgs><arg>--enable-preview</arg></compilerArgs>"
+                "</configuration></plugin></plugins></build></project>"
+            )
+        }
+    )
+    tl = timelines(r)[""]
+    assert tl.samples[0].preview is True
+    assert tl.samples[0].java_version == 15
+
+
+def test_sem_enable_preview_flag_fica_falsa(synthetic) -> None:
+    r = synthetic()
+    r.commit({"pom.xml": _pom(15)})
+    assert timelines(r)[""].samples[0].preview is False
