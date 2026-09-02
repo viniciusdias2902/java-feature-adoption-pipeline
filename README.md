@@ -24,7 +24,7 @@ uv run jmod mine                  # baseline + elegibilidade + adoção (horas; 
 uv run jmod outcomes              # first use / sustained / abandonment
 uv run jmod opportunity           # denominadores de oportunidade no HEAD
 uv run jmod dataset               # data/dataset/survival.{parquet,csv}
-uv run jmod validate              # verificação independente (piloto + 20 cegos)
+uv run jmod verify                # verificação independente (piloto + 20 cegos)
 uv run jmod analyze               # Kaplan-Meier, Cox, tabelas e figuras
 ```
 
