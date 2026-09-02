@@ -53,6 +53,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
     opp = sub.add_parser("opportunity", help="fase 12: proxies de oportunidade no HEAD")
     opp.add_argument("--limit", type=int, default=0)
+
+    sub.add_parser("dataset", help="fase 13: dataset longitudinal survival-ready")
     return p
 
 
@@ -135,6 +137,11 @@ def main(argv: list[str] | None = None) -> int:
             from jmod.mining.opportunity_runner import run_opportunity
 
             return run_opportunity(store, study, limit=args.limit)
+
+        if args.command == "dataset":
+            from jmod.dataset.build_survival import run_dataset
+
+            return run_dataset(store, study)
 
     return 1
 

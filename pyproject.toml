@@ -38,6 +38,10 @@ python_version = "3.12"
 strict = true
 files = ["src/jmod"]
 
+[[tool.mypy.overrides]]
+module = ["pandas", "pandas.*", "lifelines", "lifelines.*", "matplotlib", "matplotlib.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
