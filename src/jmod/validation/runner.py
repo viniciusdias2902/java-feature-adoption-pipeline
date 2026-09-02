@@ -73,7 +73,7 @@ def run_validate(store: Store, study: Study, *, blind: int = 20) -> int:
     targets = _projects(store, study, blind)
     OUT.mkdir(parents=True, exist_ok=True)
 
-    dossiers: list[dict[str, object]] = []
+    dossiers: list[dict] = []  # type: ignore[type-arg]
     print(f"validação independente: {len(targets)} projetos × {len(features)} features")
     with store.phase_run(run, PHASE):
         for i, (pid, url, group) in enumerate(targets, 1):
@@ -133,18 +133,18 @@ def run_validate(store: Store, study: Study, *, blind: int = 20) -> int:
     return 0
 
 
-def _summarize(dossiers: list[dict[str, object]]) -> None:
+def _summarize(dossiers: list[dict]) -> None:  # type: ignore[type-arg]
     from collections import Counter, defaultdict
 
     per_feature: dict[str, Counter[str]] = defaultdict(Counter)
     lags: dict[str, list[float]] = defaultdict(list)
     ev_total = ev_ok = 0
     for d in dossiers:
-        for chk in d.get("first_uses", []):  # type: ignore[union-attr]
+        for chk in d.get("first_uses", []):
             per_feature[chk["feature_id"]][chk["verdict"]] += 1
             if chk["lag_days"] is not None:
                 lags[chk["feature_id"]].append(chk["lag_days"])
-        for ev in d.get("events", []):  # type: ignore[union-attr]
+        for ev in d.get("events", []):
             ev_total += 1
             ev_ok += bool(ev["confirmed"])
 
