@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-analysis = ["pandas>=2.2", "pyarrow>=16", "lifelines>=0.28", "statsmodels>=0.14"]
+analysis = ["pandas>=2.2", "pyarrow>=16", "lifelines>=0.28", "statsmodels>=0.14", "matplotlib>=3.8"]
 
 [project.scripts]
 jmod = "jmod.cli:main"
@@ -39,7 +39,7 @@ strict = true
 files = ["src/jmod"]
 
 [[tool.mypy.overrides]]
-module = ["pandas", "pandas.*", "lifelines", "lifelines.*", "matplotlib", "matplotlib.*"]
+module = ["pandas", "pandas.*", "lifelines", "lifelines.*", "matplotlib", "matplotlib.*", "numpy", "numpy.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

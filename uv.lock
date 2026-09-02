@@ -352,6 +352,7 @@ dependencies = [
 [package.optional-dependencies]
 analysis = [
     { name = "lifelines" },
+    { name = "matplotlib" },
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "statsmodels" },
@@ -368,6 +369,7 @@ dev = [
 requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "lifelines", marker = "extra == 'analysis'", specifier = ">=0.28" },
+    { name = "matplotlib", marker = "extra == 'analysis'", specifier = ">=3.8" },
     { name = "pandas", marker = "extra == 'analysis'", specifier = ">=2.2" },
     { name = "pyarrow", marker = "extra == 'analysis'", specifier = ">=16" },
     { name = "pyyaml", specifier = ">=6.0" },

@@ -55,6 +55,7 @@ def _build_parser() -> argparse.ArgumentParser:
     opp.add_argument("--limit", type=int, default=0)
 
     sub.add_parser("dataset", help="fase 13: dataset longitudinal survival-ready")
+    sub.add_parser("analyze", help="fase 15: análise de sobrevivência")
     return p
 
 
@@ -142,6 +143,11 @@ def main(argv: list[str] | None = None) -> int:
             from jmod.dataset.build_survival import run_dataset
 
             return run_dataset(store, study)
+
+        if args.command == "analyze":
+            from jmod.analysis.survival import run_analysis
+
+            return run_analysis()
 
     return 1
 
