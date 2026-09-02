@@ -56,6 +56,9 @@ def _build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("dataset", help="fase 13: dataset longitudinal survival-ready")
     sub.add_parser("analyze", help="fase 15: análise de sobrevivência")
+
+    val = sub.add_parser("validate", help="fases P/14: verificação independente")
+    val.add_argument("--blind", type=int, default=20)
     return p
 
 
@@ -148,6 +151,11 @@ def main(argv: list[str] | None = None) -> int:
             from jmod.analysis.survival import run_analysis
 
             return run_analysis()
+
+        if args.command == "validate":
+            from jmod.validation.runner import run_validate
+
+            return run_validate(store, study, blind=args.blind)
 
     return 1
 

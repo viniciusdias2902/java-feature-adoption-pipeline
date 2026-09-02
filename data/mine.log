@@ -929,3 +929,4 @@ disjuntor: 30 falhas de rede consecutivas — encerrando o passe
   [62/277] cdapio/cdap                                     563s mod=264  ev=173 elig=0    serie=0     fu=0  RECALL-FALHOU
   [63/277] exist-db/exist                                  425s mod=66   ev=117 elig=496  serie=198   fu=49  RECALL-FALHOU
   [64/277] vaadin/framework                                441s mod=70   ev=14  elig=0    serie=0     fu=0  RECALL-FALHOU
+  [65/277] eclipse-sirius/sirius-web                      1477s mod=262  ev=173 elig=1162 serie=2131  fu=240  RECALL-FALHOU
