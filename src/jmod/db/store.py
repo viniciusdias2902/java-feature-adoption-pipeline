@@ -28,6 +28,9 @@ class Store:
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
+        # WAL + espera: leitores e o escritor da vez convivem; sem isso, qualquer comando
+        # iniciado durante uma mineração morre com "database is locked" no init_schema.
+        self.conn.execute("PRAGMA busy_timeout = 60000")
 
     # ------------------------------------------------------------------ schema
     def init_schema(self) -> None:
