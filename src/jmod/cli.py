@@ -50,6 +50,9 @@ def _build_parser() -> argparse.ArgumentParser:
     mine.add_argument("--project", type=str, default=None)
 
     sub.add_parser("outcomes", help="fase 11: first use, sustained, abandonment")
+
+    opp = sub.add_parser("opportunity", help="fase 12: proxies de oportunidade no HEAD")
+    opp.add_argument("--limit", type=int, default=0)
     return p
 
 
@@ -127,6 +130,11 @@ def main(argv: list[str] | None = None) -> int:
             from jmod.outcomes.runner import run_outcomes
 
             return run_outcomes(store, study)
+
+        if args.command == "opportunity":
+            from jmod.mining.opportunity_runner import run_opportunity
+
+            return run_opportunity(store, study, limit=args.limit)
 
     return 1
 

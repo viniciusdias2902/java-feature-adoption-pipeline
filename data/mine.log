@@ -922,3 +922,7 @@ disjuntor: 30 falhas de rede consecutivas — encerrando o passe
   [56/277] finos/common-domain-model                        39s mod=10   ev=7   elig=10   serie=13    fu=13
   [57/277] eclipse-milo/milo                               181s mod=39   ev=44  elig=152  serie=278   fu=34  RECALL-FALHOU
   [58/277] opengamma/strata                                358s mod=29   ev=0   elig=0    serie=0     fu=0
+  [59/277] apache/openjpa                                  296s mod=58   ev=232 elig=186  serie=7     fu=40
+  [60/277] omegat-org/omegat                               156s mod=51   ev=1   elig=47   serie=28    fu=10  RECALL-FALHOU
+  --- [876/1117] ok=874 falhas=2 recall_falhas=447 retry=2 · 220/h · ETA 1.1h · workspace 1.5 GB
+  [61/277] cs-si/orekit                                    298s mod=1    ev=3   elig=8    serie=34    fu=85  RECALL-FALHOU
