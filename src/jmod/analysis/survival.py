@@ -43,8 +43,8 @@ def _load() -> pd.DataFrame:
 
 
 def km_by_feature(frame: pd.DataFrame) -> tuple[pd.DataFrame, Any]:
-    from lifelines import KaplanMeierFitter
     import matplotlib
+    from lifelines import KaplanMeierFitter
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
