@@ -1,0 +1,45 @@
+validação independente: 35 projetos × 4 features
+  [1/35] robolectric/robolectric                         49s fu=['both_absent', 'both_present', 'both_absent', 'both_absent'] eventos=18/18
+  [2/35] jpmml/jpmml-sklearn                             14s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=1/9
+  [3/35] ome/openmicroscopy                             244s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=2/2
+  [4/35] languagetool-org/languagetool                  486s fu=['both_present', 'both_present', 'both_absent', 'both_absent'] eventos=134/134
+  [5/35] esapi/esapi-java-legacy                         11s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=3/3
+  [6/35] norconex/crawlers                               38s fu=['both_present', 'both_present', 'both_present', 'both_present'] eventos=17/17
+  [7/35] jbake-org/jbake                                 10s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=3/3
+  [8/35] find-sec-bugs/find-sec-bugs                      9s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=8/8
+  [9/35] jenkinsci/subversion-plugin                      6s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=0/0
+  [10/35] yegor256/rultor                                 53s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=2/2
+  [11/35] ome/bioformats                                 163s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=67/67
+  [12/35] qupath/qupath                                   45s fu=['both_present', 'both_present', 'both_present', 'both_present'] eventos=7/7
+  [13/35] gtnewhorizons/gt5-unofficial                   263s fu=['both_present', 'both_present', 'both_present', 'both_present'] eventos=1/1
+  [14/35] xvik/dropwizard-guicey                          18s fu=['both_absent', 'both_absent', 'both_absent', 'both_present'] eventos=27/27
+  [15/35] otto-de/edison-microservice                     10s fu=['both_present', 'both_absent', 'both_absent', 'both_present'] eventos=36/36
+  [16/35] eclipse-tm4e/tm4e                               11s fu=['both_present', 'both_present', 'both_present', 'pipeline_earlier_than_truth'] eventos=41/41
+  [17/35] remkop/picocli                                  19s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=15/15
+  [18/35] corfudb/corfudb                                 44s fu=['both_absent', 'both_present', 'both_absent', 'both_absent'] eventos=58/58
+  [19/35] lwjgl/lwjgl3                                    97s fu=['both_present', 'both_present', 'both_absent', 'both_present'] eventos=0/0
+  [20/35] ripmeapp/ripme                                  11s fu=['both_absent', 'both_present', 'both_absent', 'both_present'] eventos=1/1
+  [21/35] jolie/jolie                                     30s fu=['both_present', 'both_present', 'both_absent', 'both_present'] eventos=44/44
+  [22/35] ssaring/sportstracker                           11s fu=['both_present', 'both_present', 'both_present', 'both_present'] eventos=41/41
+  [23/35] zxing/zxing                                     10s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=17/17
+  [24/35] apache/flink                                   517s fu=['both_absent', 'both_present', 'both_present', 'both_absent'] eventos=321/321
+  [25/35] netcentric/accesscontroltool                     7s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=24/24
+  [26/35] ctt-gob-es/clienteafirma                        54s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=145/145
+  [27/35] geogebra/geogebra                               38s fu=['both_present', 'both_absent', 'both_present', 'both_present'] eventos=1/1
+  [28/35] spring-cloud/spring-cloud-vault                  4s fu=['both_absent', 'both_absent', 'both_present', 'both_present'] eventos=0/0
+  [29/35] pinpoint-apm/pinpoint                          338s fu=['both_present', 'both_absent', 'both_absent', 'pipeline_earlier_than_truth'] eventos=2/335
+  [30/35] eleybourn/book-catalogue                         7s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=1/1
+  [31/35] dependency-check/dependencycheck                24s fu=['both_absent', 'both_present', 'both_absent', 'both_absent'] eventos=22/22
+  [32/35] jctools/jctools                                  6s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=12/12
+  [33/35] openhft/chronicle-wire                          22s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=0/0
+  [34/35] projectlombok/lombok                            12s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=1/1
+  [35/35] thulab/iot-benchmark                             8s fu=['both_absent', 'both_absent', 'both_absent', 'both_absent'] eventos=22/22
+
+=== primeiro uso: pipeline vs grafo completo ===
+feature               TP  TN  FN  FP  precisão  recall  lag mediano
+record                11  24   0   0      100%    100%        1.0d
+switch_expression     11  22   0   0      100%    100%        0.0d
+text_block             8  27   0   0      100%    100%        0.0d
+var                   13  22   0   0      100%    100%        0.0d
+
+eventos de baseline confirmados textualmente: 1094/1435 (76%)
