@@ -96,3 +96,37 @@ def test_evento_nao_confirmado_quando_o_texto_nao_muda(synthetic) -> None:
     sha = r.commit({"pom.xml": pom + "<!-- só comentário -->", "README.md": "x"})
     chk = check_version_event(Repo(r.path), sha, 17, "upgrade")
     assert chk.confirmed is False
+
+
+# --------------------------------------------------------------- retomabilidade
+def test_dossies_ja_produzidos_sao_retomados(tmp_path, monkeypatch) -> None:
+    """A Fase 14 morreu num `poweroff` aos 31/35 e perdeu tudo: o `dossiers.json` só era
+    escrito no fim do laço. Agora cada dossiê é persistido assim que fica pronto."""
+    from jmod.validation import runner
+
+    jsonl = tmp_path / "dossiers.jsonl"
+    monkeypatch.setattr(runner, "OUT", tmp_path)
+    monkeypatch.setattr(runner, "JSONL", jsonl)
+
+    assert runner._load_done() == {}
+
+    runner._append({"project_id": "a/b", "group": "pilot", "first_uses": [], "events": []})
+    runner._append({"project_id": "c/d", "group": "blind", "error": "TimeoutExpired: clone"})
+    done = runner._load_done()
+
+    assert set(done) == {"a/b"}, "projeto com erro deve ser retentado na retomada"
+    assert done["a/b"]["group"] == "pilot"
+
+
+def test_ultimo_registro_do_projeto_prevalece(tmp_path, monkeypatch) -> None:
+    """Retomar depois de uma falha sobrescreve o registro de erro pelo dossiê bom."""
+    from jmod.validation import runner
+
+    jsonl = tmp_path / "dossiers.jsonl"
+    monkeypatch.setattr(runner, "OUT", tmp_path)
+    monkeypatch.setattr(runner, "JSONL", jsonl)
+
+    runner._append({"project_id": "a/b", "group": "pilot", "error": "TimeoutExpired: clone"})
+    runner._append({"project_id": "a/b", "group": "pilot", "first_uses": [], "events": []})
+
+    assert set(runner._load_done()) == {"a/b"}

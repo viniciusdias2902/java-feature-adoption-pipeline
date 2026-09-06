@@ -71,6 +71,40 @@ class Store:
             self.conn.executemany(sql, [tuple(r[c] for c in cols) for r in rows])
         return len(rows)
 
+    #: Tabelas derivadas da Fase 10, na ordem de dependência. `projects`, `probe`,
+    #: `pilot_sample`, `exclusions` e `run_log` NÃO entram: são o quadro amostral e a
+    #: proveniência, não resultado de mineração.
+    MINED_TABLES = (
+        "recall_checks",
+        "adoption_outcomes",
+        "feature_series",
+        "feature_occurrences",
+        "feature_candidates",
+        "eligibility",
+        "version_events",
+        "baseline_intervals",
+        "baseline_observations",
+        "build_file_changes",
+    )
+
+    def purge_mined(self, project_id: str) -> dict[str, int]:
+        """Apaga tudo que a Fase 10 derivou de um projeto, para permitir reprocessá-lo.
+
+        `upsert` casa por chave primária e nunca remove: reminerar depois de corrigir um
+        detector deixaria as ocorrências antigas — inclusive os falsos positivos que a
+        correção elimina — vivas no banco. Retorna as linhas apagadas por tabela.
+        """
+        removed: dict[str, int] = {}
+        with self.conn:
+            for table in self.MINED_TABLES:
+                cur = self.conn.execute(
+                    f"DELETE FROM {table} WHERE project_id = ?",  # noqa: S608
+                    (project_id,),
+                )
+                if cur.rowcount:
+                    removed[table] = cur.rowcount
+        return removed
+
     def exclude(self, project_id: str, phase: str, reason: str, detail: str | None = None) -> None:
         """Único caminho para remover um projeto da população."""
         if not reason:

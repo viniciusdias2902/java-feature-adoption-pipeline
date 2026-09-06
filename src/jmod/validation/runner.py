@@ -12,12 +12,31 @@ from jmod.config import Study
 from jmod.db import Store
 from jmod.events.timeline import BACKFILL_PATTERNS
 from jmod.features.parser import ScopeRules
-from jmod.provenance import new_run_id
+from jmod.provenance import PIPELINE_VERSION, new_run_id, now
 from jmod.repo.clone import Workspace
 from jmod.validation.independent import ProjectDossier, check_first_use, check_version_event
 
 OUT = Path("data/validation")
 PHASE = "validate"
+JSONL = OUT / "dossiers.jsonl"
+
+
+def _load_done() -> dict[str, dict]:  # type: ignore[type-arg]
+    """Dossiês já produzidos, por projeto. Registros com erro não contam como feitos.
+
+    A fase escreve um JSON por linha assim que cada projeto termina; `dossiers.json` só é
+    montado no fim. Sem isso, uma interrupção (a primeira execução morreu num `poweroff`
+    aos 31/35) descartava todo o trabalho, e a fase era a única do pipeline não retomável.
+    """
+    if not JSONL.exists():
+        return {}
+    done: dict[str, dict] = {}  # type: ignore[type-arg]
+    for line in JSONL.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        rec = json.loads(line)
+        done[rec["project_id"]] = rec
+    return {pid: rec for pid, rec in done.items() if "error" not in rec}
 
 
 def _pipeline_first_use(
@@ -65,7 +84,7 @@ def _projects(store: Store, study: Study, blind: int) -> list[tuple[str, str, st
     return pilot + [(r["project_id"], r["clone_url"], "blind") for r in ranked[:blind]]
 
 
-def run_validate(store: Store, study: Study, *, blind: int = 20) -> int:
+def run_validate(store: Store, study: Study, *, blind: int = 20, redo: bool = False) -> int:
     run = new_run_id()
     rules = ScopeRules.from_config(study.paths)
     workspace = Workspace(Path("data/work"))
@@ -73,10 +92,17 @@ def run_validate(store: Store, study: Study, *, blind: int = 20) -> int:
     targets = _projects(store, study, blind)
     OUT.mkdir(parents=True, exist_ok=True)
 
-    dossiers: list[dict] = []  # type: ignore[type-arg]
-    print(f"validação independente: {len(targets)} projetos × {len(features)} features")
+    if redo:
+        JSONL.unlink(missing_ok=True)
+    done = _load_done()
+    pending = [t for t in targets if t[0] not in done]
+    dossiers: list[dict] = [done[pid] for pid, _, _ in targets if pid in done]  # type: ignore[type-arg]
+    print(
+        f"validação independente: {len(targets)} projetos × {len(features)} features"
+        + (f" ({len(done)} já feitos, {len(pending)} pendentes)" if done else "")
+    )
     with store.phase_run(run, PHASE):
-        for i, (pid, url, group) in enumerate(targets, 1):
+        for i, (pid, url, group) in enumerate(pending, 1):
             started = time.monotonic()
             dossier = ProjectDossier(pid)
             try:
@@ -100,13 +126,14 @@ def run_validate(store: Store, study: Study, *, blind: int = 20) -> int:
                         check_version_event(repo, ev["sha"], ev["to_version"], ev["kind"])
                     )
             except Exception as exc:  # noqa: BLE001
-                dossiers.append(
-                    {
-                        "project_id": pid,
-                        "group": group,
-                        "error": f"{type(exc).__name__}: {exc}"[:200],
-                    }
-                )
+                record = {
+                    "project_id": pid,
+                    "group": group,
+                    "error": f"{type(exc).__name__}: {exc}"[:200],
+                }
+                dossiers.append(record)
+                _append(record)
+                _log_project(store, run, pid, "failed", record["error"])
                 workspace.release(pid)
                 continue
 
@@ -118,10 +145,12 @@ def run_validate(store: Store, study: Study, *, blind: int = 20) -> int:
                 "events": [asdict(c) for c in dossier.events],
             }
             dossiers.append(record)
+            _append(record)
+            _log_project(store, run, pid, "ok", None)
             verdicts = [c.verdict for c in dossier.first_uses]
             confirmed = sum(e.confirmed for e in dossier.events)
             print(
-                f"  [{i}/{len(targets)}] {pid:<44} {time.monotonic() - started:5.0f}s "
+                f"  [{i}/{len(pending)}] {pid:<44} {time.monotonic() - started:5.0f}s "
                 f"fu={verdicts} eventos={confirmed}/{len(dossier.events)}",
                 flush=True,
             )
@@ -131,6 +160,30 @@ def run_validate(store: Store, study: Study, *, blind: int = 20) -> int:
     )
     _summarize(dossiers)
     return 0
+
+
+def _append(record: dict) -> None:  # type: ignore[type-arg]
+    """Persiste um dossiê assim que ele fica pronto — a fase é retomável."""
+    with JSONL.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def _log_project(store: Store, run: str, pid: str, status: str, error: str | None) -> None:
+    store.upsert(
+        "run_log",
+        [
+            {
+                "run_id": run,
+                "phase": PHASE,
+                "project_id": pid,
+                "status": status,
+                "started_at": now(),
+                "ended_at": now(),
+                "error": error,
+                "pipeline_version": PIPELINE_VERSION,
+            }
+        ],
+    )
 
 
 def _summarize(dossiers: list[dict]) -> None:  # type: ignore[type-arg]

@@ -48,6 +48,11 @@ def _scan_head(clone_url: str, rules: ScopeRules) -> tuple[str, dict[tuple[str, 
         for java in dest.rglob("*.java"):
             if ".git" in java.parts:
                 continue
+            # `*.java` também casa diretório: projetos Eclipse usam nomes pontuados como
+            # `org.eclipse.foo.java/`, e `read_bytes` estourava IsADirectoryError, matando
+            # o projeto inteiro. Derrubou 5 dos 14 fracassos da Fase 12 (D-017).
+            if not java.is_file():
+                continue
             content = java.read_bytes()
             rel = str(java.relative_to(dest))
             scope = rules.classify(rel, content)

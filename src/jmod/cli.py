@@ -48,6 +48,17 @@ def _build_parser() -> argparse.ArgumentParser:
     mine = sub.add_parser("mine", help="fase 10: mineração de baseline, elegibilidade e adoção")
     mine.add_argument("--limit", type=int, default=0)
     mine.add_argument("--project", type=str, default=None)
+    mine.add_argument(
+        "--projects-file",
+        type=str,
+        default=None,
+        help="arquivo com um project_id por linha; restringe a fila a eles",
+    )
+    mine.add_argument(
+        "--redo",
+        action="store_true",
+        help="reprocessa projetos já minerados, apagando antes o que a Fase 10 derivou",
+    )
 
     sub.add_parser("outcomes", help="fase 11: first use, sustained, abandonment")
 
@@ -59,6 +70,9 @@ def _build_parser() -> argparse.ArgumentParser:
 
     ver = sub.add_parser("verify", help="fases P/14: verificação independente")
     ver.add_argument("--blind", type=int, default=20)
+    ver.add_argument(
+        "--redo", action="store_true", help="descarta dossiês já produzidos e recomeça"
+    )
     return p
 
 
@@ -130,7 +144,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "mine":
             from jmod.mining.runner import run_mine
 
-            return run_mine(store, study, limit=args.limit, only=args.project)
+            return run_mine(
+                store,
+                study,
+                limit=args.limit,
+                only=args.project,
+                redo=args.redo,
+                projects_file=args.projects_file,
+            )
 
         if args.command == "outcomes":
             from jmod.outcomes.runner import run_outcomes
@@ -155,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "verify":
             from jmod.validation.runner import run_validate
 
-            return run_validate(store, study, blind=args.blind)
+            return run_validate(store, study, blind=args.blind, redo=args.redo)
 
     return 1
 

@@ -72,3 +72,44 @@ def test_switch_de_seta_nao_e_oportunidade() -> None:
 def test_fallthrough_vazio_agrupavel_conta() -> None:
     src = "class A { int m(int d){ switch(d){ case 1: case 2: return 12; default: return 0; } } }"
     assert n("attributive_switch", src) == 1
+
+
+# ------------------------------------------- denominador no dataset: zero vs. ausente
+def test_denominador_de_oportunidade_separa_zero_de_ausente() -> None:
+    """O desenho só define proxy para duas features; e proxy ausente num projeto medido é 0.
+
+    A Fase 12 grava uma linha por (proxy, escopo) observado. Tratar a chave ausente como
+    nulo confundia "não tinha oportunidade" com "não foi medido" — 158 zeros legítimos
+    viravam nulos e saíam do desfecho normalizado (D-017).
+    """
+    from jmod.dataset.build_survival import opportunity_head
+
+    counts = {("a/b", "instanceof_cast"): 7}
+    measured = {"a/b", "c/d"}
+
+    assert opportunity_head(counts, measured, "a/b", "pattern_instanceof") == 7
+    # medido, mas o proxy não ocorre no HEAD -> zero, não nulo
+    assert opportunity_head(counts, measured, "a/b", "switch_expression") == 0
+    assert opportunity_head(counts, measured, "c/d", "pattern_instanceof") == 0
+    # projeto que a Fase 12 nunca mediu (clone falhou) -> continua nulo
+    assert opportunity_head(counts, measured, "e/f", "pattern_instanceof") is None
+    # features sem proxy de alta confiabilidade não têm denominador
+    for feature in ("record", "var", "text_block", "sealed", "record_pattern", "pattern_switch"):
+        assert opportunity_head(counts, measured, "a/b", feature) is None
+
+
+def test_diretorio_com_sufixo_java_nao_derruba_o_projeto(tmp_path) -> None:
+    """Projetos Eclipse têm diretórios pontuados (`org.eclipse.foo.java/`) que casam com
+    `rglob("*.java")`; `read_bytes` neles estourava IsADirectoryError e matava a medição
+    do projeto inteiro (D-017)."""
+    (tmp_path / "org.eclipse.foo.java").mkdir()
+    (tmp_path / "Real.java").write_bytes(b"class A {}")
+
+    lidos = []
+    for java in tmp_path.rglob("*.java"):
+        if not java.is_file():
+            continue
+        lidos.append(java.name)
+        java.read_bytes()  # não pode estourar
+
+    assert lidos == ["Real.java"]

@@ -102,3 +102,53 @@ def test_lote_com_colunas_divergentes_e_rejeitado(store: Store) -> None:
 def test_tabela_desconhecida_falha_alto(store: Store) -> None:
     with pytest.raises(ValueError, match="desconhecida"):
         store.upsert("nao_existe", [{"a": 1}])
+
+
+def test_purge_mined_apaga_so_o_derivado(tmp_path) -> None:
+    """`upsert` casa por chave primária e nunca remove: reminerar depois de corrigir um
+    detector deixaria as ocorrências antigas vivas. `purge_mined` é o que torna a Fase 10
+    reprocessável — sem tocar no quadro amostral nem na proveniência (D-016)."""
+    from jmod.provenance import PIPELINE_VERSION, now
+
+    with Store(tmp_path / "s.sqlite") as store:
+        store.init_schema()
+        for pid in ("a/b", "c/d"):
+            store.upsert(
+                "projects",
+                [
+                    {
+                        "project_id": pid,
+                        "full_name": pid,
+                        "clone_url": f"https://x/{pid}.git",
+                        "default_branch": "main",
+                        "frame_source": "seart",
+                        "pipeline_version": PIPELINE_VERSION,
+                        "collected_at": now(),
+                    }
+                ],
+            )
+            store.upsert(
+                "feature_occurrences",
+                [
+                    {
+                        "project_id": pid,
+                        "feature_id": "switch_expression",
+                        "sha": "deadbeef",
+                        "path": "A.java",
+                        "module_path": None,
+                        "node_subtype": "expression_position",
+                        "line": 1,
+                        "byte_start": 0,
+                        "scope": "production",
+                        "committed_at": now(),
+                        "pipeline_version": PIPELINE_VERSION,
+                    }
+                ],
+            )
+
+        removed = store.purge_mined("a/b")
+
+        assert removed["feature_occurrences"] == 1
+        restantes = store.query("SELECT project_id FROM feature_occurrences")
+        assert [r["project_id"] for r in restantes] == ["c/d"], "só o projeto alvo é apagado"
+        assert len(store.query("SELECT project_id FROM projects")) == 2, "quadro amostral intacto"

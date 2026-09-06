@@ -272,15 +272,48 @@ def mine_project(
             workspace.release(project_id)
 
 
-def run_mine(store: Store, study: Study, *, limit: int, only: str | None = None) -> int:
+def run_mine(
+    store: Store,
+    study: Study,
+    *,
+    limit: int,
+    only: str | None = None,
+    redo: bool = False,
+    projects_file: str | None = None,
+) -> int:
     run = new_run_id()
     budget = DiskBudget.from_gb(WORKSPACE, float(study.storage["disk_budget_gb"]))
     workspace = Workspace(WORKSPACE, budget=budget)
     workers = int(study.storage["workers"])
     db_path = store.path
 
+    # `--redo` reprocessa projetos já minerados: ignora o filtro de "já tem run_log ok" e
+    # apaga o que a Fase 10 derivou antes de reminerar, porque `upsert` nunca remove e as
+    # ocorrências antigas sobreviveriam à correção de um detector (D-016).
+    wanted: list[str] = []
+    if projects_file:
+        wanted = [
+            line.strip()
+            for line in Path(projects_file).read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")
+        ]
+        if not wanted:
+            print(f"{projects_file}: nenhum projeto listado", file=sys.stderr)
+            return 2
+
+    conditions = ["e.project_id IS NULL"]
+    params: list[str] = []
+    if not redo:
+        conditions.append("r.project_id IS NULL")
+    if only:
+        conditions.append("p.project_id = ?")
+        params.append(only)
+    if wanted:
+        conditions.append(f"p.project_id IN ({', '.join('?' for _ in wanted)})")
+        params.extend(wanted)
+
     rows = store.query(
-        "SELECT p.project_id, p.clone_url, p.default_branch, "
+        "SELECT DISTINCT p.project_id, p.clone_url, p.default_branch, "
         "       (ps.project_id IS NOT NULL) AS is_pilot, COALESCE(p.seart_loc_java, 0) loc "
         "FROM projects p "
         "JOIN probe pr USING (project_id) "
@@ -288,17 +321,29 @@ def run_mine(store: Store, study: Study, *, limit: int, only: str | None = None)
         "LEFT JOIN exclusions e ON e.project_id = p.project_id "
         "LEFT JOIN run_log r ON r.phase = 'mine' AND r.project_id = p.project_id "
         "                     AND r.status = 'ok' "
-        "WHERE e.project_id IS NULL AND r.project_id IS NULL "
-        + ("AND p.project_id = ? " if only else "")
-        + "ORDER BY is_pilot DESC, loc ASC"
-        + (f" LIMIT {int(limit)}" if limit else ""),
-        (only,) if only else (),
+        "WHERE " + " AND ".join(conditions) + " "
+        "ORDER BY is_pilot DESC, loc ASC" + (f" LIMIT {int(limit)}" if limit else ""),
+        tuple(params),
     )
     queue = list(rows)
     total = len(queue)
     if not total:
         print("nada a minerar: tudo processado ou excluído")
         return 0
+    if wanted:
+        faltando = sorted(set(wanted) - {r["project_id"] for r in queue})
+        if faltando:
+            print(
+                f"aviso: {len(faltando)} projeto(s) da lista não entraram na fila "
+                f"(excluídos ou sem probe): {', '.join(faltando[:5])}"
+                + (" …" if len(faltando) > 5 else ""),
+                file=sys.stderr,
+            )
+    if redo:
+        apagadas = 0
+        for row in queue:
+            apagadas += sum(store.purge_mined(row["project_id"]).values())
+        print(f"--redo: {apagadas} linhas derivadas apagadas de {total} projetos", flush=True)
     print(
         f"mineração de {total} projetos com {workers} workers "
         f"(piloto primeiro, depois por tamanho)",

@@ -30,6 +30,31 @@ def _dt(iso: str) -> datetime:
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
+PROXY_OF = {"pattern_instanceof": "instanceof_cast", "switch_expression": "attributive_switch"}
+
+
+def opportunity_head(
+    counts: dict[tuple[str, str], int],
+    measured: set[str],
+    project_id: str,
+    feature_id: str,
+) -> int | None:
+    """Denominador de oportunidade no HEAD, distinguindo zero de ausente.
+
+    O desenho define proxy só para as duas features de alta confiabilidade; para as outras seis
+    o denominador não existe e é `None`. Para essas duas, um projeto medido cujo proxy não
+    ocorre no HEAD tem denominador **zero** — a Fase 12 grava uma linha por (proxy, escopo)
+    observado, então a ausência da chave não separava "sem oportunidade" de "não medido", e
+    158 zeros legítimos viravam nulos (D-017).
+    """
+    proxy = PROXY_OF.get(feature_id)
+    if proxy is None:
+        return None
+    if (project_id, proxy) in counts:
+        return counts[(project_id, proxy)]
+    return 0 if project_id in measured else None
+
+
 def run_dataset(store: Store, study: Study) -> int:
     run = new_run_id()
     window_start = _dt(f"{study.window_start}T00:00:00+00:00")
@@ -63,7 +88,13 @@ def run_dataset(store: Store, study: Study) -> int:
         "SELECT project_id, proxy_id, count FROM opportunity_series WHERE scope='production'"
     ):
         opportunity[(r["project_id"], r["proxy_id"])] = r["count"]
-    proxy_of = {"pattern_instanceof": "instanceof_cast", "switch_expression": "attributive_switch"}
+    # Projeto medido cujo proxy não ocorre no HEAD tem denominador **zero**, não ausente:
+    # a Fase 12 grava uma linha por (proxy, escopo) observado, então a ausência da chave
+    # não distingue "sem oportunidade" de "não medido". Qualquer linha de oportunidade,
+    # em qualquer escopo, marca o projeto como medido (D-017).
+    measured = {
+        r["project_id"] for r in store.query("SELECT DISTINCT project_id FROM opportunity_series")
+    }
 
     rows = []
     excluded = {"pre_eligibility_use": 0, "never_eligible": 0}
@@ -80,7 +111,6 @@ def run_dataset(store: Store, study: Study) -> int:
             entry = max(0.0, (window_start - t0).days) if t0 < window_start else 0.0
             duration = float(r["time_to_first_use_days"] or 0)
             cov = covariates.get(r["project_id"], {})
-            proxy = proxy_of.get(r["feature_id"])
             rows.append(
                 {
                     "row_id": f"{r['project_id']}::{r['feature_id']}",
@@ -97,9 +127,9 @@ def run_dataset(store: Store, study: Study) -> int:
                             "sustained": r["sustained"],
                             "sustained_simple": r["sustained_simple"],
                             "abandoned": r["abandoned"],
-                            "opportunity_head": opportunity.get((r["project_id"], proxy))
-                            if proxy
-                            else None,
+                            "opportunity_head": opportunity_head(
+                                opportunity, measured, r["project_id"], r["feature_id"]
+                            ),
                         },
                         ensure_ascii=False,
                     ),
