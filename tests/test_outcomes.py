@@ -122,3 +122,15 @@ def test_fronteira_2_vs_3_ocorrencias() -> None:
     tres = derive_outcome(base, [pt("2020-01-01", 1), pt("2020-05-01", 3, 2)], **KW)
     assert duas.sustained == 0
     assert tres.sustained == 1
+
+
+def test_exposure_days_merges_overlapping_module_periods() -> None:
+    # 23 módulos elegíveis desde a mesma data não multiplicam a exposição (união).
+    periods = [Period(d("2023-03-14"), None) for _ in range(23)]
+    assert exposure_days(periods, d("2023-03-14"), d("2026-09-01")) == 1267
+    # sobreposição parcial: [jan, jun) ∪ [abr, out) = jan..out
+    periods = [Period(d("2020-01-01"), d("2020-06-01")), Period(d("2020-04-01"), d("2020-10-01"))]
+    assert exposure_days(periods, d("2020-01-01"), d("2020-12-31")) == 274
+    # intervalos disjuntos continuam somando
+    periods = [Period(d("2020-01-01"), d("2020-02-01")), Period(d("2020-03-01"), d("2020-04-01"))]
+    assert exposure_days(periods, d("2020-01-01"), d("2020-12-31")) == 62

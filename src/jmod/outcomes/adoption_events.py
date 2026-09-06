@@ -61,14 +61,31 @@ def _dt(iso: str) -> datetime:
 
 
 def exposure_days(periods: list[Period], start: str, until: str) -> int:
-    """Dias elegíveis entre `start` e `until`, somando só o tempo dentro dos períodos."""
+    """Dias elegíveis entre `start` e `until`: tempo coberto pela UNIÃO dos períodos.
+
+    Os períodos vêm de módulos distintos e se sobrepõem (projeto elegível
+    quando ∃ módulo elegível). Somar sem unir contaria o mesmo dia uma vez por
+    módulo — um projeto com 23 módulos teria 23× a exposição real.
+    """
     lo, hi = _dt(start), _dt(until)
-    total = 0.0
+    clipped = []
     for p in periods:
         a = max(lo, _dt(p.start))
         b = hi if p.end is None else min(hi, _dt(p.end))
         if b > a:
-            total += (b - a).total_seconds()
+            clipped.append((a, b))
+    clipped.sort()
+    total = 0.0
+    cur_a = cur_b = None
+    for a, b in clipped:
+        if cur_b is None or a > cur_b:
+            if cur_b is not None:
+                total += (cur_b - cur_a).total_seconds()
+            cur_a, cur_b = a, b
+        elif b > cur_b:
+            cur_b = b
+    if cur_b is not None:
+        total += (cur_b - cur_a).total_seconds()
     return int(total // 86400)
 
 
