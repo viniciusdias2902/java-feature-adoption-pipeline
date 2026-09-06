@@ -127,6 +127,58 @@ def _pattern_instanceof(tree: Tree, source: bytes) -> Iterator[Hit]:
 
 
 # ---------------------------------------------------------- switch expressions
+_STATEMENT_CONTAINERS = frozenset(
+    {
+        "block",
+        "constructor_body",
+        "switch_block_statement_group",
+        "switch_rule",
+        "labeled_statement",
+        "expression_statement",
+        "program",
+    }
+)
+
+# Nós que hospedam um statement num campo e uma expressão noutro. As condições de
+# `if`/`while`/`do`/`for` nunca caem aqui — a gramática as embrulha em
+# `parenthesized_expression` —, mas o corpo sem chaves cai, e o iterável do for-each
+# (`for (T x : switch (...) {...})`) é expressão no campo `value`.
+_STATEMENT_FIELDS = {
+    "if_statement": frozenset({"consequence", "alternative"}),
+    "while_statement": frozenset({"body"}),
+    "do_statement": frozenset({"body"}),
+    "for_statement": frozenset({"body"}),
+    "enhanced_for_statement": frozenset({"body"}),
+}
+
+
+def _field_name(parent: Node, child: Node) -> str | None:
+    for i in range(parent.child_count):
+        if parent.child(i) == child:
+            return parent.field_name_for_child(i)
+    return None
+
+
+def _in_expression_position(node: Node) -> bool:
+    """O switch produz um valor, em vez de ser executado como statement?
+
+    A gramática chama todo switch de `switch_expression`, então a posição é o que separa
+    a feature do switch clássico. A regra é uma *lista de contextos de statement*: tudo
+    que não é statement é expressão. A lista precisa ser exaustiva — `constructor_body`
+    faltava e fazia todo switch clássico dentro de um construtor virar falso positivo
+    (D-016; caso real: mikera/vectorz, `ZeroArray.java:35`).
+    """
+    parent = node.parent
+    if parent is None:
+        return False
+    if parent.type in _STATEMENT_CONTAINERS:
+        return False
+    fields = _STATEMENT_FIELDS.get(parent.type)
+    if fields is not None:
+        return _field_name(parent, node) not in fields
+    return True
+
+
 @register("switch_expression")
 def _switch_expressions(tree: Tree, source: bytes) -> Iterator[Hit]:
     """JEP 361. A gramática não tem `switch_statement`: todo switch é `switch_expression`.
@@ -141,26 +193,8 @@ def _switch_expressions(tree: Tree, source: bytes) -> Iterator[Hit]:
         body = node.child_by_field_name("body")
         arrow = body is not None and any(c.type == "switch_rule" for c in body.children)
         yields = any(n.type == "yield_statement" for n in walk(node))
-        # Posição de expressão exige pai de contexto de EXPRESSÃO. "pai != block" não
-        # basta: um switch clássico aninhado em `case X:`, `if` sem chaves ou label tem
-        # pai switch_block_statement_group/if_statement/... e continua sendo statement.
-        # (Falso positivo real: qupath, RotatedImageServer.java L97.)
-        statement_parents = {
-            "block",
-            "switch_block_statement_group",
-            "switch_rule",
-            "labeled_statement",
-            "if_statement",
-            "while_statement",
-            "do_statement",
-            "for_statement",
-            "enhanced_for_statement",
-            "expression_statement",
-            "program",
-        }
-        in_expression = node.parent is not None and node.parent.type not in statement_parents
 
-        if in_expression:
+        if _in_expression_position(node):
             subtype = "expression_position"
         elif yields:
             subtype = "yield"

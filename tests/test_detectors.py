@@ -178,6 +178,84 @@ def test_switch_classico_aninhado_nao_e_expressao() -> None:
         assert _hits("switch_expression", src) == [], src
 
 
+# Tabela exaustiva de posição do switch (D-016). A gramática chama todo switch de
+# `switch_expression`, então só a posição separa a feature do switch clássico:
+# classificar exige conhecer *todos* os contêineres de statement. `constructor_body`
+# faltava e fazia todo switch clássico dentro de um construtor virar falso positivo —
+# o defeito atingiu 351 projetos da população. Caso real: mikera/vectorz,
+# `ZeroArray.java:35`.
+STATEMENT_CONTEXTS: dict[str, str] = {
+    "construtor": "class A { A(int a){ switch(a){ case 1: break; } } }",
+    "método": "class A { void m(int a){ switch(a){ case 1: break; } } }",
+    "inicializador estático": "class A { static { switch(a){ case 1: break; } } }",
+    "inicializador de instância": "class A { { switch(a){ case 1: break; } } }",
+    "try": "class A { void m(int a){ try { switch(a){ case 1: break; } } catch (E e) {} } }",
+    "finally": "class A { void m(int a){ try {} finally { switch(a){ case 1: break; } } } }",
+    "synchronized": (
+        "class A { void m(int a, Object o){ synchronized (o) { switch(a){ case 1: break; } } } }"
+    ),
+    "corpo de while sem chaves": (
+        "class A { void m(int a){ while (a > 0) switch(a){ case 1: break; } } }"
+    ),
+    "corpo de for sem chaves": "class A { void m(int a){ for (;;) switch(a){ case 1: break; } } }",
+    "corpo de for-each sem chaves": (
+        "class A { void m(int[] xs){ for (int a : xs) switch(a){ case 1: break; } } }"
+    ),
+    "corpo de lambda": (
+        "class A { void m(int a){ Runnable r = () -> { switch(a){ case 1: break; } }; } }"
+    ),
+}
+
+EXPRESSION_CONTEXTS: dict[str, str] = {
+    "declaração de variável": (
+        "class A { void m(int a){ int v = switch(a){ case 1 -> 2; default -> 3; }; } }"
+    ),
+    "atribuição": (
+        "class A { int v; void m(int a){ v = switch(a){ case 1 -> 2; default -> 3; }; } }"
+    ),
+    "campo": "class A { int v = switch(a){ case 1 -> 2; default -> 3; }; }",
+    "return": "class A { int m(int a){ return switch(a){ case 1 -> 2; default -> 3; }; } }",
+    "argumento": "class A { void m(int a){ f(switch(a){ case 1 -> 2; default -> 3; }); } }",
+    "expressão binária": (
+        "class A { void m(int a){ int v = 1 + switch(a){ case 1 -> 2; default -> 3; }; } }"
+    ),
+    "ternário": (
+        "class A { void m(int a, boolean c){ int v = c ? switch(a){ case 1 -> 2;"
+        " default -> 3; } : 0; } }"
+    ),
+    "cast": (
+        "class A { void m(int a){ Object o = (Object) switch(a){ case 1 -> 2; default -> 3; }; } }"
+    ),
+    "parênteses": "class A { void m(int a){ int v = (switch(a){ case 1 -> 2; default -> 3; }); } }",
+    "inicializador de array": (
+        "class A { void m(int a){ int[] v = { switch(a){ case 1 -> 2; default -> 3; } }; } }"
+    ),
+    "condição de if": (
+        "class A { void m(int a){ if (switch(a){ case 1 -> true; default -> false; }) f(); } }"
+    ),
+    "iterável do for-each": (
+        "class A { void m(int a){ for (int x : switch(a){ case 1 -> xs; default -> ys; }) f(); } }"
+    ),
+}
+
+
+@pytest.mark.parametrize("nome", sorted(STATEMENT_CONTEXTS))
+def test_switch_classico_em_contexto_de_statement_nao_conta(nome: str) -> None:
+    assert _hits("switch_expression", STATEMENT_CONTEXTS[nome]) == []
+
+
+@pytest.mark.parametrize("nome", sorted(EXPRESSION_CONTEXTS))
+def test_switch_em_posicao_de_expressao_conta(nome: str) -> None:
+    hits = _hits("switch_expression", EXPRESSION_CONTEXTS[nome])
+    assert [h.node_subtype for h in hits] == ["expression_position"]
+
+
+def test_switch_classico_dentro_de_case_com_seta() -> None:
+    """O switch clássico interno é statement; o externo, com setas, é a feature."""
+    src = "class A { void m(int a){ switch(a){ case 1 -> { switch(a){ case 2: break; } } } } }"
+    assert [h.node_subtype for h in _hits("switch_expression", src)] == ["arrow_statement"]
+
+
 def test_switch_em_posicao_de_expressao_continua_contando() -> None:
     casos = [
         "class A { int m(int d){ return switch(d){ case 1: yield 1; default: yield 0; }; } }",
