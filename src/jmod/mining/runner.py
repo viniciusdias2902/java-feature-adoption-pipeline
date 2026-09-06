@@ -340,10 +340,11 @@ def run_mine(
                 file=sys.stderr,
             )
     if redo:
-        apagadas = 0
-        for row in queue:
-            apagadas += sum(store.purge_mined(row["project_id"]).values())
-        print(f"--redo: {apagadas} linhas derivadas apagadas de {total} projetos", flush=True)
+        print(
+            f"--redo: {total} projetos serão reprocessados; cada um é purgado logo antes "
+            "de ser minerado, para que uma interrupção não deixe projeto sem dado",
+            flush=True,
+        )
     print(
         f"mineração de {total} projetos com {workers} workers "
         f"(piloto primeiro, depois por tamanho)",
@@ -354,6 +355,14 @@ def run_mine(
     started = time.monotonic()
 
     def work(row: sqlite3.Row) -> ProjectStats:
+        if redo:
+            # Purgar logo antes de minerar, e não a fila inteira de uma vez: purgar tudo
+            # no início deixa todo projeto ainda não processado sem dado derivado enquanto
+            # mantém seu `run_log` ok antigo, e uma interrupção faria o `jmod mine` seguinte
+            # pulá-lo como "já feito", esvaziando-o em silêncio.
+            with Store(db_path) as pstore:
+                pstore.conn.execute("PRAGMA busy_timeout = 60000")
+                pstore.purge_mined(row["project_id"])
         return mine_project(
             row["project_id"],
             row["clone_url"],
