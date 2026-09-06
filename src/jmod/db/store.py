@@ -30,7 +30,10 @@ class Store:
         self.conn.execute("PRAGMA foreign_keys = ON")
         # WAL + espera: leitores e o escritor da vez convivem; sem isso, qualquer comando
         # iniciado durante uma mineração morre com "database is locked" no init_schema.
-        self.conn.execute("PRAGMA busy_timeout = 60000")
+        # 5 min, não 1: com 12 workers a purga de um projeto grande (dez DELETEs numa só
+        # transação) segura o lock de escrita por dezenas de segundos, e 60 s estouravam
+        # (D-019).
+        self.conn.execute("PRAGMA busy_timeout = 300000")
 
     # ------------------------------------------------------------------ schema
     def init_schema(self) -> None:

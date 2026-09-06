@@ -93,7 +93,6 @@ def run_opportunity(store: Store, study: Study, *, limit: int = 0) -> int:
         for i, future in enumerate(as_completed(futures), 1):
             pid = futures[future]
             with Store(db_path) as tstore:
-                tstore.conn.execute("PRAGMA busy_timeout = 60000")
                 try:
                     sha, counts = future.result()
                 except Exception as exc:  # noqa: BLE001

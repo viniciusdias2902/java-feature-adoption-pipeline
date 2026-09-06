@@ -44,6 +44,11 @@ TRANSIENT_SIGNS = (
     "Connection reset",
     "No such file or directory",
     "Errno 2",
+    # Contenção de escrita entre os 12 workers. Nunca é motivo para tirar um projeto da
+    # população: em setembro custou 8 projetos (apache/flink, neo4j/neo4j e outros), que
+    # voltaram intactos ao serem reexecutados. Retentar é a resposta certa (D-019).
+    "database is locked",
+    "database table is locked",
 )
 
 
@@ -118,7 +123,6 @@ def mine_project(
         )
 
         with Store(db_path) as store:
-            store.conn.execute("PRAGMA busy_timeout = 60000")
             n_events = n_periods = 0
             for module, tl in timelines.items():
                 store.upsert(
@@ -374,7 +378,6 @@ def run_mine(
             # mantém seu `run_log` ok antigo, e uma interrupção faria o `jmod mine` seguinte
             # pulá-lo como "já feito", esvaziando-o em silêncio.
             with Store(db_path) as pstore:
-                pstore.conn.execute("PRAGMA busy_timeout = 60000")
                 pstore.purge_mined(row["project_id"])
         return mine_project(
             row["project_id"],
@@ -410,7 +413,6 @@ def run_mine(
                 row = futures[future]
                 pid = row["project_id"]
                 with Store(db_path) as tstore:
-                    tstore.conn.execute("PRAGMA busy_timeout = 60000")
                     base = {
                         "run_id": run,
                         "phase": PHASE,

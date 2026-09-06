@@ -155,3 +155,19 @@ def test_renomeacao_pura_nao_apodrece_o_estado(synthetic) -> None:
 
     head = scan_head(repo, "main", STUDY.features, RULES)
     assert head[("record", "production")] == finais[-1].occurrence_count
+
+
+def test_lock_do_sqlite_e_transitorio_nao_exclusao() -> None:
+    """Contenção de escrita entre os 12 workers nunca pode tirar um projeto da população.
+
+    Em setembro custou 8 projetos (apache/flink, neo4j/neo4j e outros), excluídos como
+    `mine_failed`; todos voltaram intactos ao serem reexecutados. O `busy_timeout` reduziu
+    a frequência, mas a classificação continuava tratando o erro como permanente (D-019).
+    """
+    from jmod.mining.runner import _is_transient
+
+    assert _is_transient("OperationalError: database is locked")
+    assert _is_transient("OperationalError: database table is locked: feature_candidates")
+    # erros de verdade continuam permanentes
+    assert not _is_transient("ValueError: baseline inconsistente")
+    assert not _is_transient("KeyError: 'switch_expression'")
