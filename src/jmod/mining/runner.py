@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
+from jmod import MIN_VERSION_BY_FEATURE
 from jmod.config import Study
 from jmod.db import Store
 from jmod.events.eligibility import module_eligibility
@@ -312,9 +313,17 @@ def run_mine(
         conditions.append(f"p.project_id IN ({', '.join('?' for _ in wanted)})")
         params.extend(wanted)
 
+    # Projetos que destravam linhas hoje omitidas por detecção desatualizada vêm antes, do
+    # menor para o maior: assim cada hora de reprocessamento devolve o máximo de dataset, e
+    # parar no meio deixa o melhor dataset possível para o tempo gasto (D-018).
+    afetadas = ", ".join("?" for _ in MIN_VERSION_BY_FEATURE)
+    params_prio = list(MIN_VERSION_BY_FEATURE)
     rows = store.query(
         "SELECT DISTINCT p.project_id, p.clone_url, p.default_branch, "
-        "       (ps.project_id IS NOT NULL) AS is_pilot, COALESCE(p.seart_loc_java, 0) loc "
+        "       (ps.project_id IS NOT NULL) AS is_pilot, COALESCE(p.seart_loc_java, 0) loc, "
+        "       EXISTS (SELECT 1 FROM adoption_outcomes ao "
+        f"               WHERE ao.project_id = p.project_id AND ao.feature_id IN ({afetadas})"
+        "               ) AS destrava "
         "FROM projects p "
         "JOIN probe pr USING (project_id) "
         "LEFT JOIN pilot_sample ps USING (project_id) "
@@ -322,8 +331,9 @@ def run_mine(
         "LEFT JOIN run_log r ON r.phase = 'mine' AND r.project_id = p.project_id "
         "                     AND r.status = 'ok' "
         "WHERE " + " AND ".join(conditions) + " "
-        "ORDER BY is_pilot DESC, loc ASC" + (f" LIMIT {int(limit)}" if limit else ""),
-        tuple(params),
+        "ORDER BY is_pilot DESC, destrava DESC, loc ASC"
+        + (f" LIMIT {int(limit)}" if limit else ""),
+        tuple(params_prio + params),
     )
     queue = list(rows)
     total = len(queue)

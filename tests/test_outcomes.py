@@ -134,3 +134,37 @@ def test_exposure_days_merges_overlapping_module_periods() -> None:
     # intervalos disjuntos continuam somando
     periods = [Period(d("2020-01-01"), d("2020-02-01")), Period(d("2020-03-01"), d("2020-04-01"))]
     assert exposure_days(periods, d("2020-01-01"), d("2020-12-31")) == 62
+
+
+# ------------------------------------- reprocessamento parcial: parar e usar o que deu
+def test_feature_com_deteccao_corrigida_so_entra_de_projeto_reminerado() -> None:
+    """Reprocessar a população leva horas; parar no meio não pode gerar dataset inválido.
+
+    A saída é por linha: a feature cuja detecção mudou (D-016) só entra vinda de projeto
+    já reminerado, e as demais entram sempre. Cada projeto reprocessado só acrescenta
+    linhas, então parar a qualquer momento deixa um dataset menor porém correto (D-018).
+    """
+    from jmod.dataset.build_survival import feature_is_current
+
+    versions = {"novo/proj": "0.2.0", "velho/proj": "0.1.0"}
+
+    # switch_expression exige 0.2.0
+    assert feature_is_current(versions, "novo/proj", "switch_expression")
+    assert not feature_is_current(versions, "velho/proj", "switch_expression")
+    # projeto que nunca foi minerado também não entrega a feature
+    assert not feature_is_current(versions, "ausente/proj", "switch_expression")
+
+    # as outras sete não dependem da correção e entram de qualquer versão
+    for feature in ("record", "var", "text_block", "sealed", "pattern_instanceof",
+                    "record_pattern", "pattern_switch"):
+        assert feature_is_current(versions, "velho/proj", feature), feature
+        assert feature_is_current(versions, "novo/proj", feature), feature
+
+
+def test_versao_maior_que_o_minimo_continua_valendo() -> None:
+    """O piso é `>=`, não igualdade: uma versão futura não invalida o que já foi minerado."""
+    from jmod.dataset.build_survival import feature_is_current
+
+    assert feature_is_current({"p/q": "0.10.0"}, "p/q", "switch_expression")
+    assert feature_is_current({"p/q": "1.0.0"}, "p/q", "switch_expression")
+    assert not feature_is_current({"p/q": "0.1.9"}, "p/q", "switch_expression")

@@ -17,6 +17,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from jmod import MIN_VERSION_BY_FEATURE
 from jmod.config import Study
 from jmod.db import Store
 from jmod.provenance import PIPELINE_VERSION, new_run_id
@@ -31,6 +32,40 @@ def _dt(iso: str) -> datetime:
 
 
 PROXY_OF = {"pattern_instanceof": "instanceof_cast", "switch_expression": "attributive_switch"}
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split("."))
+
+
+def mined_versions(store: Store) -> dict[str, str]:
+    """Versão da pipeline que minerou cada projeto — a execução `ok` mais recente."""
+    return {
+        r["project_id"]: r["pipeline_version"]
+        for r in store.query(
+            "SELECT project_id, pipeline_version FROM run_log "
+            "WHERE phase='mine' AND status='ok' AND project_id <> '' "
+            "ORDER BY ended_at"
+        )
+    }
+
+
+def feature_is_current(versions: dict[str, str], project_id: str, feature_id: str) -> bool:
+    """A detecção desta feature neste projeto vale na versão corrente da pipeline?
+
+    Reprocessar a população inteira leva horas, e interromper no meio não pode produzir um
+    dataset inválido. A saída é por linha, não por banco: uma feature cuja detecção mudou
+    só entra vinda de projetos já reminerados; as demais sete não são afetadas e entram
+    sempre. Assim cada projeto reprocessado só acrescenta linhas, e parar a qualquer
+    momento deixa um dataset menor porém correto (D-018).
+    """
+    minimo = MIN_VERSION_BY_FEATURE.get(feature_id)
+    if minimo is None:
+        return True
+    atual = versions.get(project_id)
+    if atual is None:
+        return False
+    return _version_tuple(atual) >= _version_tuple(minimo)
 
 
 def opportunity_head(
@@ -97,7 +132,9 @@ def run_dataset(store: Store, study: Study) -> int:
     }
 
     rows = []
+    versions = mined_versions(store)
     excluded = {"pre_eligibility_use": 0, "never_eligible": 0}
+    stale: dict[str, int] = {}
     with store.phase_run(run, PHASE):
         for r in store.query(
             "SELECT * FROM adoption_outcomes WHERE scope=?",
@@ -106,6 +143,9 @@ def run_dataset(store: Store, study: Study) -> int:
             reason = r["censor_reason"]
             if reason in excluded:
                 excluded[reason] += 1
+                continue
+            if not feature_is_current(versions, r["project_id"], r["feature_id"]):
+                stale[r["feature_id"]] = stale.get(r["feature_id"], 0) + 1
                 continue
             t0 = _dt(r["eligibility_date"])
             entry = max(0.0, (window_start - t0).days) if t0 < window_start else 0.0
@@ -154,6 +194,18 @@ def run_dataset(store: Store, study: Study) -> int:
         f"({frame['event'].sum()} eventos, {(frame['event'] == 0).sum()} censuras)"
     )
     print(f"excluídas do denominador (reportadas): {excluded}")
+    if stale:
+        total_stale = sum(stale.values())
+        pendentes = sorted(stale.items(), key=lambda kv: -kv[1])
+        print(
+            f"OMITIDAS por detecção desatualizada: {total_stale} linhas "
+            + ", ".join(f"{f} ({n})" for f, n in pendentes)
+        )
+        print(
+            "  -> essas features exigem projeto minerado em "
+            f"{ {f: MIN_VERSION_BY_FEATURE[f] for f, _ in pendentes} }; "
+            "reminere-os e reexecute `jmod dataset` para recuperá-las"
+        )
     print(f"projetos distintos: {frame['project_id'].nunique()}")
     print(f"salvo em {OUT_DIR}/survival.parquet e .csv")
     return 0
