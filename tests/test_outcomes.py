@@ -168,3 +168,50 @@ def test_versao_maior_que_o_minimo_continua_valendo() -> None:
     assert feature_is_current({"p/q": "0.10.0"}, "p/q", "switch_expression")
     assert feature_is_current({"p/q": "1.0.0"}, "p/q", "switch_expression")
     assert not feature_is_current({"p/q": "0.1.9"}, "p/q", "switch_expression")
+
+
+def test_projeto_interrompido_no_meio_fica_fora_dos_desfechos(tmp_path) -> None:
+    """Mineração morta no meio deixa dado parcial e o `ok` da rodada anterior de pé.
+
+    Incluir esse projeto o faria parecer não-adotante das features que não chegaram a ser
+    mineradas — o mesmo erro da D-016, por outra porta. A Fase 11 passa a exigir que a
+    mineração MAIS RECENTE do projeto tenha terminado bem (D-020).
+    """
+    from jmod.db import Store
+    from jmod.provenance import PIPELINE_VERSION
+
+    def linha(pid: str, run: str, status: str, quando: str) -> dict:
+        return {
+            "run_id": run,
+            "phase": "mine",
+            "project_id": pid,
+            "status": status,
+            "started_at": quando,
+            "ended_at": quando if status != "started" else None,
+            "error": None,
+            "pipeline_version": PIPELINE_VERSION,
+        }
+
+    with Store(tmp_path / "s.sqlite") as store:
+        store.init_schema()
+        store.upsert(
+            "run_log",
+            [
+                linha("completo/proj", "r1", "ok", "2026-09-01T00:00:00+00:00"),
+                linha("completo/proj", "r2", "ok", "2026-09-06T00:00:00+00:00"),
+                # interrompido: ok antigo, mas a rodada mais recente ficou em `started`
+                linha("parcial/proj", "r1", "ok", "2026-09-01T00:00:00+00:00"),
+                linha("parcial/proj", "r2", "started", "2026-09-06T00:00:00+00:00"),
+            ],
+        )
+        aptos = {
+            r["project_id"]
+            for r in store.query(
+                "SELECT r.project_id FROM run_log r WHERE r.phase='mine' AND r.status='ok' "
+                "  AND r.started_at = (SELECT MAX(r2.started_at) FROM run_log r2 "
+                "                      WHERE r2.phase='mine' AND r2.project_id = r.project_id) "
+                "GROUP BY r.project_id"
+            )
+        }
+
+    assert aptos == {"completo/proj"}

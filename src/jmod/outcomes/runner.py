@@ -19,7 +19,13 @@ def run_outcomes(store: Store, study: Study) -> int:
     projects = [
         r["project_id"]
         for r in store.query(
-            "SELECT DISTINCT project_id FROM run_log WHERE phase='mine' AND status='ok'"
+            # Só projetos cuja mineração MAIS RECENTE terminou bem. Um projeto
+            # interrompido no meio guarda o `ok` da rodada anterior mas tem dado parcial;
+            # incluí-lo o faria parecer não-adotante das features não mineradas (D-020).
+            "SELECT r.project_id FROM run_log r WHERE r.phase='mine' AND r.status='ok' "
+            "  AND r.started_at = (SELECT MAX(r2.started_at) FROM run_log r2 "
+            "                      WHERE r2.phase='mine' AND r2.project_id = r.project_id) "
+            "GROUP BY r.project_id"
         )
     ]
     print(f"desfechos para {len(projects)} projetos × {len(study.features)} features")

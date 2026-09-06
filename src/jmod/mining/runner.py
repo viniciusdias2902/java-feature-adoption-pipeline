@@ -372,12 +372,31 @@ def run_mine(
     started = time.monotonic()
 
     def work(row: sqlite3.Row) -> ProjectStats:
-        if redo:
-            # Purgar logo antes de minerar, e não a fila inteira de uma vez: purgar tudo
-            # no início deixa todo projeto ainda não processado sem dado derivado enquanto
-            # mantém seu `run_log` ok antigo, e uma interrupção faria o `jmod mine` seguinte
-            # pulá-lo como "já feito", esvaziando-o em silêncio.
-            with Store(db_path) as pstore:
+        # Marca `started` ANTES de purgar. Um projeto morto no meio da mineração fica com
+        # dado parcial (algumas features mineradas, outras não) e o `run_log` ok da rodada
+        # anterior ainda de pé — entraria nos desfechos como não-adotante das features que
+        # não chegaram a ser mineradas. O marcador deixa esse estado visível: quem tem
+        # `started` como linha mais recente está incompleto e fica fora da Fase 11 (D-020).
+        with Store(db_path) as pstore:
+            pstore.upsert(
+                "run_log",
+                [
+                    {
+                        "run_id": run,
+                        "phase": PHASE,
+                        "project_id": row["project_id"],
+                        "status": "started",
+                        "started_at": now(),
+                        "ended_at": None,
+                        "error": None,
+                        "pipeline_version": PIPELINE_VERSION,
+                    }
+                ],
+            )
+            if redo:
+                # Purgar logo antes de minerar, e não a fila inteira de uma vez: purgar
+                # tudo no início deixa todo projeto ainda não processado sem dado derivado
+                # enquanto mantém seu `run_log` ok antigo.
                 pstore.purge_mined(row["project_id"])
         return mine_project(
             row["project_id"],
