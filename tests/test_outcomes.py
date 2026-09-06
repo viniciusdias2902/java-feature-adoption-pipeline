@@ -215,3 +215,35 @@ def test_projeto_interrompido_no_meio_fica_fora_dos_desfechos(tmp_path) -> None:
         }
 
     assert aptos == {"completo/proj"}
+
+
+def test_dataset_e_reconstrucao_total_nao_acrescimo(tmp_path) -> None:
+    """`upsert` casa por `row_id` e nunca remove: linhas de execuções anteriores cujos
+    projetos saíram do dataset sobreviveriam, e o banco divergiria do parquet publicado.
+    Em 2026-09-06 eram 28 linhas órfãs de 5.102 (D-021)."""
+    from jmod.db import Store
+
+    def linha(pid: str) -> dict:
+        return {
+            "row_id": f"{pid}::record",
+            "project_id": pid,
+            "feature_id": "record",
+            "scope": "production",
+            "entry_days": 0.0,
+            "duration_days": 10.0,
+            "event": 1,
+            "covariates_json": "{}",
+            "pipeline_version": "0.2.0",
+        }
+
+    with Store(tmp_path / "s.sqlite") as store:
+        store.init_schema()
+        store.upsert("survival_rows", [linha("velho/proj"), linha("atual/proj")])
+        assert len(store.query("SELECT row_id FROM survival_rows")) == 2
+
+        # a reconstrução seguinte não inclui mais `velho/proj`
+        store.conn.execute("DELETE FROM survival_rows")
+        store.upsert("survival_rows", [linha("atual/proj")])
+
+        restantes = {r["project_id"] for r in store.query("SELECT project_id FROM survival_rows")}
+        assert restantes == {"atual/proj"}

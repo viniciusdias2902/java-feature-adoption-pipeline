@@ -176,6 +176,11 @@ def run_dataset(store: Store, study: Study) -> int:
                     "pipeline_version": PIPELINE_VERSION,
                 }
             )
+        # A Fase 13 é uma reconstrução total, não um acréscimo: `upsert` casa por
+        # `row_id` e nunca remove, então linhas de execuções anteriores cujos projetos
+        # saíram do dataset (purgados, reprocessados, excluídos) sobreviveriam e o banco
+        # divergiria do parquet publicado. Em 2026-09-06 eram 28 linhas órfãs (D-021).
+        store.conn.execute("DELETE FROM survival_rows")
         store.upsert("survival_rows", rows)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
