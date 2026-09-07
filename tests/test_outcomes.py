@@ -247,3 +247,13 @@ def test_dataset_e_reconstrucao_total_nao_acrescimo(tmp_path) -> None:
 
         restantes = {r["project_id"] for r in store.query("SELECT project_id FROM survival_rows")}
         assert restantes == {"atual/proj"}
+
+
+def test_ordem_de_apresentacao_cobre_todo_o_catalogo() -> None:
+    """`FEATURE_ORDER` governa quais recursos entram nas tabelas da análise. Um recurso no
+    catálogo e ausente dessa lista sai dos resultados em silêncio — foi o que aconteceu com
+    `unnamed_pattern` na primeira execução após a D-022."""
+    from jmod.analysis.survival import FEATURE_ORDER
+    from jmod.config import load_features
+
+    assert set(FEATURE_ORDER) == {f.id for f in load_features()}

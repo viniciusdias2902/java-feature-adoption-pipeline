@@ -18,6 +18,8 @@ import pandas as pd
 DATASET = Path("data/dataset/survival.parquet")
 OUT = Path("data/analysis")
 
+#: Ordem de apresentação. Recursos presentes no dataset mas ausentes daqui seriam
+#: silenciosamente omitidos das tabelas, então a lista é conferida contra o catálogo.
 FEATURE_ORDER = [
     "var",
     "switch_expression",
@@ -27,6 +29,7 @@ FEATURE_ORDER = [
     "sealed",
     "pattern_switch",
     "record_pattern",
+    "unnamed_pattern",
 ]
 
 
