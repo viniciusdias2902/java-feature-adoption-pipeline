@@ -16,11 +16,11 @@ def test_carrega_configuracao_real() -> None:
     study = load_study()
     assert study.seed == 20260901
     assert str(study.freeze_date) == "2026-09-01"
-    assert len(study.features) == 8
+    assert len(study.features) == 9
     assert study.eligibility["preview_counts"] is False
 
 
-def test_catalogo_cobre_as_oito_features() -> None:
+def test_catalogo_cobre_as_features_declaradas() -> None:
     ids = {f.id for f in load_features()}
     assert ids == {
         "var",
@@ -31,6 +31,7 @@ def test_catalogo_cobre_as_oito_features() -> None:
         "sealed",
         "pattern_switch",
         "record_pattern",
+        "unnamed_pattern",
     }
 
 
@@ -45,6 +46,7 @@ def test_catalogo_cobre_as_oito_features() -> None:
         ("sealed", 17),
         ("pattern_switch", 21),
         ("record_pattern", 21),
+        ("unnamed_pattern", 22),
     ],
 )
 def test_versoes_estaveis_conferem_com_as_jeps(feature_id: str, stable: int) -> None:

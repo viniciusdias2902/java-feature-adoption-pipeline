@@ -7,9 +7,11 @@
 #: 0.1.0 — primeira execução populacional
 #: 0.2.0 — D-016: `constructor_body` na classificação de posição do switch. Invalida
 #:         `switch_expression` (e só ele) nos projetos minerados em 0.1.0.
-PIPELINE_VERSION = "0.2.0"
+#: 0.3.0 — D-022: entra `unnamed_pattern` (JEP 456, estável no Java 22). Recurso novo,
+#:         não invalida nenhum dos oito anteriores.
+PIPELINE_VERSION = "0.3.0"
 
 #: Por feature, a versão a partir da qual a detecção é considerada correta. Projetos
 #: minerados abaixo disso têm a feature omitida do dataset, com a perda reportada — em vez
 #: de entrarem com dado sabidamente errado.
-MIN_VERSION_BY_FEATURE = {"switch_expression": "0.2.0"}
+MIN_VERSION_BY_FEATURE = {"switch_expression": "0.2.0", "unnamed_pattern": "0.3.0"}

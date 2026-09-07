@@ -91,3 +91,13 @@ preview = [19, 20]
 node = "record_pattern"
 candidate_regex = "(instanceof|case)[[:space:]]+[A-Z][A-Za-z0-9_.<>]*[[:space:]]*\\("
 recall_note = "Desconstrução exige parêntese após o tipo, o que a distingue de type_pattern."
+
+[[feature]]
+id = "unnamed_pattern"
+name = "Unnamed variables and patterns"
+jep = 456
+stable = 22
+preview = [21]
+node = "underscore_pattern"
+candidate_regex = "(^|[^A-Za-z0-9_$])_([^A-Za-z0-9_$]|$)"
+recall_note = "`_` isolado. `_x` e `s_` não casam. `int _ = 5` era legal até o Java 8 e produz o mesmo nó que `var _ = f()`: quem separa é a elegibilidade (>= 22), não o detector."

@@ -41,6 +41,11 @@ POSITIVAS: dict[str, list[str]] = {
         "class A { int m(int d){ return switch(d){ case 1: yield 1; default: yield 0; }; } }",
         "class A { void m(int d){ switch(d){ case 1 -> f(); default -> g(); } } }",
     ],
+    "unnamed_pattern": [
+        "class A { void m(){ try { f(); } catch (Exception _) { g(); } } }",
+        "class A { void m(){ for (var _ : lista) contador++; } }",
+        "class A { void m(Object o){ switch (o) { case Integer _ -> f(); default -> g(); } } }",
+    ],
     "pattern_switch": [
         'class A { String m(Object o){ return switch(o){ case Integer i -> "i"; '
         'case String s -> "s"; default -> "?"; }; } }',
@@ -86,6 +91,11 @@ NEGATIVAS: dict[str, list[str]] = {
         "class A { void m(int d){ switch(d){ case 1: break; default: break; } } }",
         "class A { void m(int d){ switch(d){ case 1: f(); break; } } }",
     ],
+    "unnamed_pattern": [
+        "class A { void m(){ int _x = 1; } }",
+        'class A { void m(){ String s_ = "a"; } }',
+        "class A { void m(){ var contador_total = 0; } }",
+    ],
     "pattern_switch": [
         'class A { String m(int d){ return switch(d){ case 1 -> "a"; default -> "b"; }; } }',
         "class A { void m(int d){ switch(d){ case 1: break; } } }",
@@ -101,9 +111,9 @@ def _hits(feature: str, src: str) -> list:
     return detect(feature, parse(src.encode()), src.encode())
 
 
-def test_todos_os_oito_detectores_registrados() -> None:
+def test_todos_os_detectores_do_catalogo_registrados() -> None:
     assert registered() == set(POSITIVAS) == set(NEGATIVAS)
-    assert len(registered()) == 8
+    assert len(registered()) == 9
 
 
 @pytest.mark.parametrize(
@@ -276,3 +286,58 @@ def test_pattern_switch_com_tipos_primitivos_e_binding_anonimo() -> None:
     ]
     for src in casos:
         assert _hits("pattern_switch", src), src
+
+
+# ------------------------------------- variáveis e padrões anônimos (JEP 456, Java 22)
+VARIAVEIS_ANONIMAS: dict[str, str] = {
+    "catch": "class A { void m(){ try { f(); } catch (Exception _) { g(); } } }",
+    "for-each": "class A { void m(){ for (var _ : lista) contador++; } }",
+    "variável local": "class A { void m(){ var _ = fila.poll(); } }",
+    "try-with-resources": "class A { void m(){ try (var _ = abrir()) { f(); } } }",
+}
+
+PADROES_ANONIMOS: dict[str, str] = {
+    "padrão de tipo em switch": (
+        "class A { void m(Object o){ switch (o) { case Integer _ -> f(); default -> g(); } } }"
+    ),
+    "componente de padrão de record": (
+        "class A { void m(Object o){ if (o instanceof Ponto(int x, int _)) f(x); } }"
+    ),
+    "parâmetro de lambda": "class A { void m(){ map.forEach((k, _) -> f(k)); } }",
+}
+
+
+@pytest.mark.parametrize("nome", sorted(VARIAVEIS_ANONIMAS))
+def test_variavel_anonima_conta_como_variable(nome: str) -> None:
+    hits = _hits("unnamed_pattern", VARIAVEIS_ANONIMAS[nome])
+    assert [h.node_subtype for h in hits] == ["variable"], nome
+
+
+@pytest.mark.parametrize("nome", sorted(PADROES_ANONIMOS))
+def test_padrao_anonimo_conta_como_pattern(nome: str) -> None:
+    hits = _hits("unnamed_pattern", PADROES_ANONIMOS[nome])
+    assert [h.node_subtype for h in hits] == ["pattern"], nome
+
+
+def test_identificador_com_underscore_nao_conta() -> None:
+    """`_x`, `s_` e `a__b` contêm o caractere mas não são o `_` isolado."""
+    for src in (
+        "class A { void m(){ int _x = 1; } }",
+        'class A { void m(){ String s_ = "a"; } }',
+        "class A { void m(){ int a__b = 1; } }",
+        "class A { static final int MY_CONST = 3; }",
+    ):
+        assert _hits("unnamed_pattern", src) == [], src
+
+
+def test_underscore_legado_e_indistinguivel_e_isso_e_deliberado() -> None:
+    """`int _ = 5;` era legal até o Java 8 e produz o mesmo nó que `var _ = f()`.
+
+    A gramática não os separa e o detector não tenta: quem separa é a elegibilidade
+    (a elegibilidade exige baseline >= 22) e a exclusão por `pre_eligibility_use`. O teste fixa esse
+    comportamento para que ninguém o "corrija" adicionando heurística de tipo.
+    """
+    legado = _hits("unnamed_pattern", "class A { void m(){ int _ = 5; } }")
+    moderno = _hits("unnamed_pattern", "class A { void m(){ var _ = f(); } }")
+    assert [h.node_subtype for h in legado] == ["variable"]
+    assert [h.node_subtype for h in moderno] == ["variable"]

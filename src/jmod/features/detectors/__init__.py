@@ -205,6 +205,40 @@ def _switch_expressions(tree: Tree, source: bytes) -> Iterator[Hit]:
         yield _hit("switch_expression", node, subtype)
 
 
+# ------------------------------------------------ variáveis e padrões anônimos
+#: Onde um `identifier` de texto `_` é um *padrão* anônimo. Nesses contextos a gramática
+#: não produz `underscore_pattern`; o nó continua sendo um identificador comum.
+_PAIS_DE_PADRAO_ANONIMO = frozenset(
+    {"type_pattern", "record_pattern_component", "inferred_parameters"}
+)
+
+
+@register("unnamed_pattern")
+def _unnamed(tree: Tree, source: bytes) -> Iterator[Hit]:
+    """JEP 456, final no Java 22. O `_` aparece sob dois nós distintos.
+
+    Como *variável* anônima (`catch (E _)`, `for (var _ : xs)`, `var _ = f()`,
+    `try (var _ = ...)`), a gramática produz `underscore_pattern`. Como *padrão* anônimo
+    (`case Integer _ ->`, `Ponto(int x, int _)`, `(k, _) -> ...`), produz um `identifier`
+    comum cujo texto é `_`; só o pai o distingue.
+
+    Cuidado herdado das contextual keywords: `int _ = 5;` era legal até o Java 8 e produz
+    exatamente o mesmo nó que `var _ = f()`. A gramática não os separa, e nada aqui tenta
+    separá-los --- quem faz isso é a elegibilidade (o recurso exige baseline ≥ 22, e
+    um projeto com `_` legado está no Java 8) e a exclusão por `pre_eligibility_use`.
+    """
+    for node in walk(tree.root_node):
+        if node.type == "underscore_pattern":
+            yield _hit("unnamed_pattern", node, "variable")
+        elif (
+            node.type == "identifier"
+            and text_of(source, node) == "_"
+            and node.parent is not None
+            and node.parent.type in _PAIS_DE_PADRAO_ANONIMO
+        ):
+            yield _hit("unnamed_pattern", node, "pattern")
+
+
 # ------------------------------------------------- pattern matching (switch)
 @register("pattern_switch")
 def _pattern_switch(tree: Tree, source: bytes) -> Iterator[Hit]:
