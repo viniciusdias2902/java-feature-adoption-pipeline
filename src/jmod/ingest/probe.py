@@ -64,9 +64,15 @@ def shallow_clone(
 
 def inspect_tree(root: Path) -> ProbeResult:
     """Inspeciona uma árvore já materializada. Separado do clone para poder ser testado."""
-    poms = [p for p in root.rglob("pom.xml") if ".git" not in p.parts]
-    groovy = [p for p in root.rglob("build.gradle") if ".git" not in p.parts]
-    kts = [p for p in root.rglob("build.gradle.kts") if ".git" not in p.parts]
+    # `rglob` casa diretório também: `jib-core/examples/build.gradle` é uma pasta no
+    # googlecontainertools/jib, e `read_text` nela estourava IsADirectoryError, derrubando
+    # o probe do projeto inteiro. Mesmo defeito da D-017, em segundo lugar (D-025).
+    def _arquivos(padrao: str) -> list[Path]:
+        return [p for p in root.rglob(padrao) if ".git" not in p.parts and p.is_file()]
+
+    poms = _arquivos("pom.xml")
+    groovy = _arquivos("build.gradle")
+    kts = _arquivos("build.gradle.kts")
 
     if poms and (groovy or kts):
         build_system = "mixed"

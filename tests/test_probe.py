@@ -133,3 +133,23 @@ def test_menor_versao_entre_modulos(tmp_path: Path) -> None:
 def test_ignora_arvore_git(tmp_path: Path, nome: str) -> None:
     r = inspect_tree(_tree(tmp_path, {nome: GRADLE_GROOVY, ".git/objects/pom.xml": POM_RELEASE}))
     assert r.build_system.startswith("gradle")
+
+
+def test_diretorio_com_nome_de_arquivo_de_build_nao_derruba_o_probe(tmp_path) -> None:
+    """`rglob` casa diretório: `jib-core/examples/build.gradle` é uma pasta no
+    googlecontainertools/jib, e `read_text` nela estourava IsADirectoryError, derrubando o
+    probe do projeto inteiro. Mesmo defeito da D-017, encontrado depois em segundo lugar."""
+    (tmp_path / "examples").mkdir()
+    (tmp_path / "examples" / "build.gradle").mkdir()
+    (tmp_path / "build.gradle").write_text("sourceCompatibility = 17\n")
+    (tmp_path / "pom.xml").mkdir()
+
+    achados = []
+    for padrao in ("pom.xml", "build.gradle", "build.gradle.kts"):
+        for p in tmp_path.rglob(padrao):
+            if ".git" in p.parts or not p.is_file():
+                continue
+            achados.append(p.name)
+            p.read_text()  # não pode estourar
+
+    assert achados == ["build.gradle"]
