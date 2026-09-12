@@ -90,6 +90,28 @@ def _cum_incidence(km: Any, days: int) -> float:
         return float("nan")
 
 
+def teste_proporcionalidade(frame: pd.DataFrame) -> pd.DataFrame:
+    """Schoenfeld sobre as covariáveis do Cox.
+
+    O `lifelines` não calcula resíduos de Schoenfeld com truncamento à esquerda
+    (`NotImplementedError: Residuals for entries not implemented`), então o teste roda
+    sobre o mesmo modelo sem truncamento --- é diagnóstico, não o modelo reportado.
+    """
+    from lifelines import CoxPHFitter
+    from lifelines.statistics import proportional_hazard_test
+
+    covs = ["log_stars", "log_loc", "log_commits", "age_years", "log_modules", "gradle",
+            "external_parent"]
+    d = frame[frame.feature_id != "var"][
+        ["duration_days", "event", "project_id", *covs]
+    ].dropna()
+    c = CoxPHFitter(penalizer=0.01)
+    c.fit(d, duration_col="duration_days", event_col="event", cluster_col="project_id",
+          robust=True)
+    r = proportional_hazard_test(c, d, time_transform="rank").summary[["test_statistic", "p"]]
+    return r.sort_values("p").round(4)
+
+
 def cox_model(frame: pd.DataFrame, *, maven_only: bool = False) -> pd.DataFrame:
     from lifelines import CoxPHFitter
 
@@ -107,7 +129,13 @@ def cox_model(frame: pd.DataFrame, *, maven_only: bool = False) -> pd.DataFrame:
     ]
     if maven_only:
         covs.remove("gradle")
-    data = sub[["duration_days", "event", "entry_days", "project_id", *covs]].dropna()
+    # Cox estratificado POR RECURSO. Os hazards de base diferem por ordem de
+    # grandeza entre os recursos (mediana de 169 dias a não atingida), então um baseline
+    # único violaria a suposição de proporcionalidade por construção. O teste de Schoenfeld
+    # confirma a violação em `log_stars`; a estratificação é a correção que prescreve.
+    data = sub[
+        ["duration_days", "event", "entry_days", "project_id", "feature_id", *covs]
+    ].dropna()
     cph = CoxPHFitter(penalizer=0.01)
     cph.fit(
         data,
@@ -115,6 +143,7 @@ def cox_model(frame: pd.DataFrame, *, maven_only: bool = False) -> pd.DataFrame:
         event_col="event",
         entry_col="entry_days",
         cluster_col="project_id",
+        strata=["feature_id"],
         robust=True,
     )
     summary = cph.summary[["exp(coef)", "exp(coef) lower 95%", "exp(coef) upper 95%", "p"]]
@@ -172,6 +201,7 @@ def run_analysis() -> int:
     cox = cox_model(frame)
     cox_maven = cox_model(frame, maven_only=True)
 
+    teste_proporcionalidade(frame).to_csv(OUT / "ph_schoenfeld.csv")
     km_table.to_csv(OUT / "adoption_by_feature.csv", index=False)
     persistence.to_csv(OUT / "persistence_by_feature.csv", index=False)
     cox.to_csv(OUT / "cox_full.csv")
