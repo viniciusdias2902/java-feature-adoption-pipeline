@@ -1,0 +1,10 @@
+feature,n_eligible,n_adopted,adoption_pct,median_days_km,adopted_1y_pct,adopted_2y_pct
+var,861,500,58.1,872.0,34.9,46.5
+switch_expression,686,443,64.6,355.0,51.4,61.9
+text_block,699,273,39.1,1576.0,26.6,37.3
+record,682,411,60.3,460.0,44.7,57.3
+pattern_instanceof,663,492,74.2,169.0,63.2,73.6
+sealed,705,164,23.3,,11.0,18.2
+pattern_switch,383,153,39.9,840.0,36.5,46.8
+record_pattern,395,55,13.9,,11.6,18.4
+unnamed_pattern,136,44,32.4,,38.9,49.2

@@ -1,0 +1,10 @@
+feature,adopters,sustained_pct,sustained_simple_pct,abandoned_pct,window_open
+var,500,60.5,94.2,4.4,42
+switch_expression,443,64.5,98.9,1.1,66
+text_block,273,46.6,95.2,2.9,35
+record,411,65.2,98.3,1.5,72
+pattern_instanceof,492,74.7,98.6,1.2,73
+sealed,164,40.2,96.3,1.2,47
+pattern_switch,153,70.1,97.4,0.7,36
+record_pattern,55,29.7,96.4,1.8,18
+unnamed_pattern,44,73.7,93.2,4.5,25

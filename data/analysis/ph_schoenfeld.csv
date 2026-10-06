@@ -1,0 +1,8 @@
+,test_statistic,p
+log_stars,7.0784,0.0078
+age_years,3.5429,0.0598
+log_loc,2.7891,0.0949
+external_parent,1.1949,0.2743
+log_modules,0.8411,0.3591
+log_commits,0.1511,0.6974
+gradle,0.0107,0.9177
