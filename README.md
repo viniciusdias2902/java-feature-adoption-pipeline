@@ -8,6 +8,11 @@ O diferencial metodológico: o relógio de adoção de cada feature começa na *
 projeto se tornou elegível** para usá-la (sua baseline passou a permitir), não na data de
 lançamento global da feature.
 
+## Licença
+
+MIT, em `LICENSE`. Os artefatos de `data/` (CSV, parquet, dossiês) acompanham o mesmo
+termo.
+
 ## Reprodução com Docker
 
 Requisito no host: apenas Docker. A imagem leva Python 3.12, `uv`, `git` e as
