@@ -1,0 +1,46 @@
+variante,feature,adotantes,janela_aberta,sustentada_pct
+estudo (3 occ / 2 arq / 180 d),pattern_instanceof,492,73,74.7
+estudo (3 occ / 2 arq / 180 d),pattern_switch,153,36,70.1
+estudo (3 occ / 2 arq / 180 d),record,411,72,65.2
+estudo (3 occ / 2 arq / 180 d),record_pattern,55,18,29.7
+estudo (3 occ / 2 arq / 180 d),sealed,164,47,40.2
+estudo (3 occ / 2 arq / 180 d),switch_expression,443,66,64.5
+estudo (3 occ / 2 arq / 180 d),text_block,273,35,46.6
+estudo (3 occ / 2 arq / 180 d),unnamed_pattern,44,25,73.7
+estudo (3 occ / 2 arq / 180 d),var,500,42,60.5
+frouxa (2 occ / 1 arq / 180 d),pattern_instanceof,492,73,84.5
+frouxa (2 occ / 1 arq / 180 d),pattern_switch,153,36,98.3
+frouxa (2 occ / 1 arq / 180 d),record,411,72,78.2
+frouxa (2 occ / 1 arq / 180 d),record_pattern,55,18,56.8
+frouxa (2 occ / 1 arq / 180 d),sealed,164,47,59.8
+frouxa (2 occ / 1 arq / 180 d),switch_expression,443,66,77.7
+frouxa (2 occ / 1 arq / 180 d),text_block,273,35,70.2
+frouxa (2 occ / 1 arq / 180 d),unnamed_pattern,44,25,78.9
+frouxa (2 occ / 1 arq / 180 d),var,500,42,77.5
+estrita (5 occ / 3 arq / 180 d),pattern_instanceof,492,73,65.9
+estrita (5 occ / 3 arq / 180 d),pattern_switch,153,36,53.8
+estrita (5 occ / 3 arq / 180 d),record,411,72,49.3
+estrita (5 occ / 3 arq / 180 d),record_pattern,55,18,16.2
+estrita (5 occ / 3 arq / 180 d),sealed,164,47,18.8
+estrita (5 occ / 3 arq / 180 d),switch_expression,443,66,51.2
+estrita (5 occ / 3 arq / 180 d),text_block,273,35,34.5
+estrita (5 occ / 3 arq / 180 d),unnamed_pattern,44,25,52.6
+estrita (5 occ / 3 arq / 180 d),var,500,42,47.8
+janela curta (3 occ / 2 arq / 90 d),pattern_instanceof,492,28,67.2
+janela curta (3 occ / 2 arq / 90 d),pattern_switch,153,14,58.3
+janela curta (3 occ / 2 arq / 90 d),record,411,33,58.7
+janela curta (3 occ / 2 arq / 90 d),record_pattern,55,12,25.6
+janela curta (3 occ / 2 arq / 90 d),sealed,164,25,30.9
+janela curta (3 occ / 2 arq / 90 d),switch_expression,443,33,57.3
+janela curta (3 occ / 2 arq / 90 d),text_block,273,17,38.7
+janela curta (3 occ / 2 arq / 90 d),unnamed_pattern,44,11,72.7
+janela curta (3 occ / 2 arq / 90 d),var,500,15,50.7
+janela longa (3 occ / 2 arq / 365 d),pattern_instanceof,492,138,85.3
+janela longa (3 occ / 2 arq / 365 d),pattern_switch,153,68,74.1
+janela longa (3 occ / 2 arq / 365 d),record,411,127,75.4
+janela longa (3 occ / 2 arq / 365 d),record_pattern,55,29,38.5
+janela longa (3 occ / 2 arq / 365 d),sealed,164,70,48.9
+janela longa (3 occ / 2 arq / 365 d),switch_expression,443,118,72.9
+janela longa (3 occ / 2 arq / 365 d),text_block,273,81,55.7
+janela longa (3 occ / 2 arq / 365 d),unnamed_pattern,44,32,75.0
+janela longa (3 occ / 2 arq / 365 d),var,500,85,66.7

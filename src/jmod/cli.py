@@ -67,6 +67,9 @@ def _build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("dataset", help="fase 13: dataset longitudinal survival-ready")
     sub.add_parser("analyze", help="fase 15: análise de sobrevivência")
+    sub.add_parser(
+        "sensitivity", help="fase 15b: sensibilidade da sustentada aos limiares congelados"
+    )
 
     ver = sub.add_parser("verify", help="fases P/14: verificação independente")
     ver.add_argument("--blind", type=int, default=20)
@@ -172,6 +175,11 @@ def main(argv: list[str] | None = None) -> int:
             from jmod.analysis.survival import run_analysis
 
             return run_analysis()
+
+        if args.command == "sensitivity":
+            from jmod.analysis.sensitivity import run_sensitivity
+
+            return run_sensitivity(store, study)
 
         if args.command == "verify":
             from jmod.validation.runner import run_validate
