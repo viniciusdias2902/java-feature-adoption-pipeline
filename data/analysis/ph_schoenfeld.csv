@@ -1,8 +1,29 @@
-,test_statistic,p
-log_stars,7.0784,0.0078
-age_years,3.5429,0.0598
-log_loc,2.7891,0.0949
-external_parent,1.1949,0.2743
-log_modules,0.8411,0.3591
-log_commits,0.1511,0.6974
-gradle,0.0107,0.9177
+,modelo,transform,covariavel,test_statistic,p
+0,sem estratos,rank,age_years,3.5429,0.0598
+1,sem estratos,rank,external_parent,1.1949,0.2743
+2,sem estratos,rank,gradle,0.0107,0.9177
+3,sem estratos,rank,log_commits,0.1511,0.6974
+4,sem estratos,rank,log_loc,2.7891,0.0949
+5,sem estratos,rank,log_modules,0.8411,0.3591
+6,sem estratos,rank,log_stars,7.0784,0.0078
+7,sem estratos,log,age_years,3.538,0.06
+8,sem estratos,log,external_parent,2.3319,0.1267
+9,sem estratos,log,gradle,0.0645,0.7996
+10,sem estratos,log,log_commits,0.4741,0.4911
+11,sem estratos,log,log_loc,3.658,0.0558
+12,sem estratos,log,log_modules,1.7641,0.1841
+13,sem estratos,log,log_stars,7.2279,0.0072
+14,estratificado por feature,rank,age_years,0.6056,0.4364
+15,estratificado por feature,rank,external_parent,0.0001,0.994
+16,estratificado por feature,rank,gradle,0.0646,0.7994
+17,estratificado por feature,rank,log_commits,0.0653,0.7983
+18,estratificado por feature,rank,log_loc,0.8768,0.3491
+19,estratificado por feature,rank,log_modules,0.1769,0.6741
+20,estratificado por feature,rank,log_stars,0.4476,0.5035
+21,estratificado por feature,log,age_years,3.1373,0.0765
+22,estratificado por feature,log,external_parent,2.0337,0.1538
+23,estratificado por feature,log,gradle,0.3222,0.5703
+24,estratificado por feature,log,log_commits,0.8226,0.3644
+25,estratificado por feature,log,log_loc,3.343,0.0675
+26,estratificado por feature,log,log_modules,1.151,0.2833
+27,estratificado por feature,log,log_stars,4.9217,0.0265

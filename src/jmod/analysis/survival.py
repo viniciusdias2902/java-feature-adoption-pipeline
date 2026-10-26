@@ -2,7 +2,7 @@
 
 Origem do relógio: a DATA DE ELEGIBILIDADE de cada (projeto, feature) — o diferencial
 metodológico do estudo. Kaplan–Meier por feature; Cox PH com variância robusta agrupada
-por projeto; truncamento à esquerda registrado; BH sobre os contrastes principais;
+por projeto; BH sobre os contrastes principais;
 `var` sempre reportado à parte; sensibilidade sustained-(i) e só-Maven.
 """
 
@@ -17,6 +17,17 @@ import pandas as pd
 
 DATASET = Path("data/dataset/survival.parquet")
 OUT = Path("data/analysis")
+
+#: Covariáveis do modelo, compartilhadas pelo Cox e pelo teste de proporcionalidade.
+COVARIAVEIS = [
+    "log_stars",
+    "log_loc",
+    "log_commits",
+    "age_years",
+    "log_modules",
+    "gradle",
+    "external_parent",
+]
 
 #: Ordem de apresentação. Recursos presentes no dataset mas ausentes daqui seriam
 #: silenciosamente omitidos das tabelas, então a lista é conferida contra o catálogo.
@@ -91,25 +102,51 @@ def _cum_incidence(km: Any, days: int) -> float:
 
 
 def teste_proporcionalidade(frame: pd.DataFrame) -> pd.DataFrame:
-    """Schoenfeld sobre as covariáveis do Cox.
+    """Schoenfeld sobre as covariáveis do Cox, nos DOIS modelos.
 
-    O `lifelines` não calcula resíduos de Schoenfeld com truncamento à esquerda
-    (`NotImplementedError: Residuals for entries not implemented`), então o teste roda
-    sobre o mesmo modelo sem truncamento --- é diagnóstico, não o modelo reportado.
+    Sem estratos o teste acusa violação em `log_stars`; é esse resultado que justifica a
+    estratificação. Com estratos por feature --- o modelo que é reportado --- o teste
+    tem de rodar de novo, porque é esse ajuste cujas suposições precisam valer. Rodar
+    somente o primeiro e atribuir a ele a conclusão sobre o segundo seria reportar o
+    diagnóstico de um modelo que não é o publicado.
+
+    Duas transformações de tempo, porque a conclusão depende delas: `rank` (default do
+    lifelines) e `log`, onde `log_stars` ainda se aproxima do limiar.
     """
     from lifelines import CoxPHFitter
     from lifelines.statistics import proportional_hazard_test
 
-    covs = ["log_stars", "log_loc", "log_commits", "age_years", "log_modules", "gradle",
-            "external_parent"]
     d = frame[frame.feature_id != "var"][
-        ["duration_days", "event", "project_id", *covs]
+        ["duration_days", "event", "project_id", "feature_id", *COVARIAVEIS]
     ].dropna()
-    c = CoxPHFitter(penalizer=0.01)
-    c.fit(d, duration_col="duration_days", event_col="event", cluster_col="project_id",
-          robust=True)
-    r = proportional_hazard_test(c, d, time_transform="rank").summary[["test_statistic", "p"]]
-    return r.sort_values("p").round(4)
+
+    saida = []
+    for modelo, strata in (("sem estratos", None), ("estratificado por feature", ["feature_id"])):
+        # Sem estratos o `feature_id` não pode ficar no frame: o lifelines o trataria
+        # como covariável e falharia ao convertê-lo para float.
+        dados = d if strata else d.drop(columns=["feature_id"])
+        c = CoxPHFitter(penalizer=0.01)
+        c.fit(
+            dados,
+            duration_col="duration_days",
+            event_col="event",
+            cluster_col="project_id",
+            strata=strata,
+            robust=True,
+        )
+        for transform in ("rank", "log"):
+            r = proportional_hazard_test(c, dados, time_transform=transform).summary
+            for cov, linha in r.iterrows():
+                saida.append(
+                    {
+                        "modelo": modelo,
+                        "transform": transform,
+                        "covariavel": cov,
+                        "test_statistic": round(float(linha["test_statistic"]), 4),
+                        "p": round(float(linha["p"]), 4),
+                    }
+                )
+    return pd.DataFrame(saida)
 
 
 def cox_model(frame: pd.DataFrame, *, maven_only: bool = False) -> pd.DataFrame:
@@ -118,30 +155,23 @@ def cox_model(frame: pd.DataFrame, *, maven_only: bool = False) -> pd.DataFrame:
     sub = frame[frame.feature_id != "var"].copy()  # var à parte
     if maven_only:
         sub = sub[sub.build_system.isin(["maven", "mixed"])]
-    covs = [
-        "log_stars",
-        "log_loc",
-        "log_commits",
-        "age_years",
-        "log_modules",
-        "gradle",
-        "external_parent",
-    ]
-    if maven_only:
-        covs.remove("gradle")
+    covs = [c for c in COVARIAVEIS if not (maven_only and c == "gradle")]
     # Cox estratificado POR RECURSO. Os hazards de base diferem por ordem de
     # grandeza entre os recursos (mediana de 169 dias a não atingida), então um baseline
-    # único violaria a suposição de proporcionalidade por construção. O teste de Schoenfeld
-    # confirma a violação em `log_stars`; a estratificação é a correção que prescreve.
-    data = sub[
-        ["duration_days", "event", "entry_days", "project_id", "feature_id", *covs]
-    ].dropna()
+    # único violaria a proporcionalidade por construção — e o teste de Schoenfeld sem
+    # estratos acusa justamente isso. `teste_proporcionalidade` confere o ajuste já
+    # estratificado, que é o reportado.
+    #
+    # Sem `entry_col`: a janela analítica começa no GA do Java 10, a primeira feature do
+    # catálogo, então nenhum par é elegível antes dela e `entry_days` é zero nas 5.210
+    # linhas. Declará-lo não mudava estimativa alguma e bloqueava os resíduos de
+    # Schoenfeld no lifelines, que não os calcula com truncamento à esquerda.
+    data = sub[["duration_days", "event", "project_id", "feature_id", *covs]].dropna()
     cph = CoxPHFitter(penalizer=0.01)
     cph.fit(
         data,
         duration_col="duration_days",
         event_col="event",
-        entry_col="entry_days",
         cluster_col="project_id",
         strata=["feature_id"],
         robust=True,
