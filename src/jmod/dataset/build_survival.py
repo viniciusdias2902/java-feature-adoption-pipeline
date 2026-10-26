@@ -212,5 +212,28 @@ def run_dataset(store: Store, study: Study) -> int:
             "reminere-os e reexecute `jmod dataset` para recuperá-las"
         )
     print(f"projetos distintos: {frame['project_id'].nunique()}")
+
+    # Lista nominal dos projetos minerados, para o pacote de replicação: sem ela, um
+    # terceiro não consegue nem conferir o quadro amostral nem repetir a seleção.
+    # `na_analise` distingue quem entrou no dataset de quem ficou fora e por quê.
+    analisados = set(frame["project_id"])
+    projetos = [
+        {
+            "project_id": r["project_id"],
+            "full_name": r["full_name"],
+            "stars": r["seart_stars"],
+            "commits": r["seart_commits"],
+            "loc_java": r["seart_loc_java"],
+            "created_at": r["seart_created_at"],
+            "na_analise": int(r["project_id"] in analisados),
+        }
+        for r in store.query(
+            "SELECT p.* FROM projects p JOIN run_log r ON r.project_id = p.project_id "
+            "WHERE r.phase='mine' AND r.status='ok' GROUP BY p.project_id "
+            "ORDER BY p.full_name"
+        )
+    ]
+    pd.DataFrame(projetos).to_csv(OUT_DIR / "projects.csv", index=False)
+    print(f"lista de projetos: {len(projetos)} linhas em {OUT_DIR}/projects.csv")
     print(f"salvo em {OUT_DIR}/survival.parquet e .csv")
     return 0
