@@ -6,7 +6,6 @@ data
 local
 tests
 src
-docs
 **/__pycache__
 **/*.py[cod]
 *.sqlite

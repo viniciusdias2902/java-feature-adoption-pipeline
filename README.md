@@ -21,7 +21,7 @@ e extrai a baseline dos arquivos de build, sem compilar nada.
 
 ```sh
 docker compose build                    # ~3 min na primeira vez
-docker compose run --rm teste           # 403 testes
+docker compose run --rm teste           # 407 testes
 docker compose run --rm analise         # jmod dataset + jmod analyze
 docker compose run --rm lint            # ruff + mypy
 docker compose run --rm shell           # shell interativo em /work
@@ -47,7 +47,7 @@ Requisitos: Python ≥ 3.12, `uv`, `git` ≥ 2.51 (para `git backfill`), rede.
 
 ```sh
 uv sync --extra analysis
-uv run pytest                     # 403 testes
+uv run pytest                     # 407 testes
 
 uv run jmod init                  # cria data/db/study.sqlite
 uv run jmod ingest --from-seart-api   # quadro amostral (SEART GHS, filtros de seleção)
@@ -59,6 +59,7 @@ uv run jmod opportunity           # denominadores de oportunidade no HEAD
 uv run jmod dataset               # data/dataset/survival.{parquet,csv}
 uv run jmod verify                # verificação independente (piloto + 20 cegos)
 uv run jmod analyze               # Kaplan-Meier, Cox, tabelas e figuras
+uv run jmod sensitivity           # sensibilidade dos limiares de sustentada
 ```
 
 Todas as etapas são idempotentes e retomáveis: reexecutar pula o que já foi persistido;
@@ -79,5 +80,5 @@ Quadro amostral do SEART GHS reconferido no cliente; clones bare blobless com
 internos resolvidos; eventos de versão com janela de persistência de 30 dias; candidatos
 por pickaxe (`-S`/`-G` POSIX ERE) confirmados por AST tree-sitter; invariante de recall
 contra varredura completa do HEAD; desfechos com censura explícita; validação por
-releitura do grafo completo com candidatos ingênuos; sobrevivência com truncamento à
-esquerda e variância agrupada por projeto.
+releitura do grafo completo com candidatos ingênuos; sobrevivência com variância
+agrupada por projeto e modelo estratificado por feature.
