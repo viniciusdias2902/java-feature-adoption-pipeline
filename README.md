@@ -8,13 +8,41 @@ O diferencial metodológico: o relógio de adoção de cada feature começa na *
 projeto se tornou elegível** para usá-la (sua baseline passou a permitir), não na data de
 lançamento global da feature.
 
-## Reprodução
+## Reprodução com Docker
+
+Requisito no host: apenas Docker. A imagem leva Python 3.12, `uv`, `git` e as
+dependências de análise. **Não é preciso JDK**: a pipeline lê sintaxe Java com tree-sitter
+e extrai a baseline dos arquivos de build, sem compilar nada.
+
+```sh
+docker compose build                    # ~3 min na primeira vez
+docker compose run --rm teste           # 403 testes
+docker compose run --rm analise         # jmod dataset + jmod analyze
+docker compose run --rm lint            # ruff + mypy
+docker compose run --rm shell           # shell interativo em /work
+```
+
+O repositório entra no container por bind mount em `/work`, com o uid do host, então os
+artefatos de `data/` aparecem direto na árvore de trabalho. O banco
+`data/db/study.sqlite` **não** está no git (1,4 GB) e precisa ser reconstruído pelas
+fases de mineração antes de rodar `analise`.
+
+As fases de mineração precisam de rede e de token:
+
+```sh
+GITHUB_TOKEN=ghp_... docker compose run --rm shell jmod ingest --from-seart-api
+```
+
+`SOURCE_DATE_EPOCH` está fixado na data de congelamento do estudo, então reexecutar a
+análise sem mudar nada produz figuras byte a byte idênticas.
+
+## Reprodução sem Docker
 
 Requisitos: Python ≥ 3.12, `uv`, `git` ≥ 2.51 (para `git backfill`), rede.
 
 ```sh
 uv sync --extra analysis
-uv run pytest                     # 350 testes
+uv run pytest                     # 403 testes
 
 uv run jmod init                  # cria data/db/study.sqlite
 uv run jmod ingest --from-seart-api   # quadro amostral (SEART GHS, filtros de seleção)

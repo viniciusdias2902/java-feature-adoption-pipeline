@@ -1,0 +1,46 @@
+# Um serviço por tarefa. O repositório inteiro entra em /work por bind mount, então
+# o banco e os artefatos de data/ ficam no host, não dentro do container.
+#
+#   docker compose run --rm teste     roda a suíte
+#   docker compose run --rm analise   refaz dataset e modelos
+#   docker compose run --rm shell     shell interativo
+name: jmod
+
+x-comum: &comum
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  image: jmod:latest
+  # O uid do host, para que os arquivos gerados não saiam pertencendo a root.
+  user: "${UID:-1000}:${GID:-1000}"
+  working_dir: /work
+  volumes:
+    - .:/work
+  environment:
+    # Só a ingestão e a revalidação precisam; vazio não atrapalha o resto.
+    GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+
+services:
+  teste:
+    <<: *comum
+    command: pytest -q
+
+  lint:
+    <<: *comum
+    command: sh -c "ruff check src tests && mypy"
+
+  # Refaz o dataset de sobrevivência e os modelos a partir do banco minerado.
+  analise:
+    <<: *comum
+    command: sh -c "jmod dataset && jmod analyze"
+
+  # Fases de mineração: precisam de rede e de GITHUB_TOKEN no ambiente.
+  pipeline:
+    <<: *comum
+    command: jmod status
+
+  shell:
+    <<: *comum
+    command: bash
+    stdin_open: true
+    tty: true

@@ -1,0 +1,16 @@
+# O repositório entra por bind mount em tempo de execução. No build só é preciso
+# o suficiente para resolver as dependências do projeto.
+.git
+.venv
+data
+local
+tests
+src
+docs
+**/__pycache__
+**/*.py[cod]
+*.sqlite
+*.sqlite-*
+.ruff_cache
+.mypy_cache
+.pytest_cache
